@@ -206,6 +206,7 @@ function init() {
 
 function createApplicationAt(path) {
     copy(__dirname + '/../template/', path);
+    mkdir(name + '/logs', 0);
     write(path + '/app.js', app);
     write(path + '/package.json', json);
 }
@@ -215,15 +216,12 @@ function createApplicationAt(path) {
 function addDependency() {
     //check if the current dir has the file package.json
     if (ph.existsSync('./package.json')) {
-        var ls = spawn('npm', ['install', '-d']);
-        ls.stdout.on('data', function (data) {
-            console.log('stdout: ' + data);
-        });
-        ls.stderr.on('data', function (data) {
-            console.log('stderr: ' + data);
-        });
-        ls.on('exit', function (code) {
-            console.log('child process exited with code ' + code);
+        exec('cd ' + name + ' && npm install -d', function (error, stdout, stderr) {
+            console.log('stdout:' + stdout);
+            console.log('stderr:' + stderr);
+            if (error !== null) {
+                console.log('exec error: ' + error);
+            }
         });
     }
     else {
@@ -335,9 +333,11 @@ function stop() {
 // list the servers of the program
 function list() {
     if (ph.existsSync('./tmp')) {
+
         fs.readFile('./tmp', function (err, data) {
             if (err) throw err;
             process.kill(data, 'SIGINT');
+
             var client = require('socket.io-client');
             var socket = client.connect('http://127.0.0.1:3000');
             socket.on('connect', function () {
@@ -346,6 +346,7 @@ function list() {
                     process.exit(1);
                 });
             });
+
         });
     }
     else {
@@ -358,19 +359,22 @@ function list() {
 // kill the program
 function kill() {
     if (ph.existsSync('./tmp')) {
-        exec('ps -p ' + fs.readFileSync('./tmp'), function (error, stdout, stderr) {
+        var ex = exec('ps -p ' + fs.readFileSync('./tmp'), function (error, stdout, stderr) {
             if (stdout.length <= 28) {
+                fs.unlinkSync('./tmp');
                 abort("The program is stopped.");
             }
             else {
                 fs.readFile('./tmp', function (err, data) {
                     if (err) throw err;
-                    spawn('kill', ['-9'].concat(data)).on('exit', function () {
-                        fs.unlinkSync('./tmp');
-                        abort("The program is killed.");
-                    });
+                    console.log("Closing the program......");
+                    process.kill(data, 'SIGHUP');
                 });
+                setTimeout(function () {
+                    fs.unlinkSync('./tmp');
+                }, 120000);
             }
+
         });
     }
     else {
@@ -472,16 +476,11 @@ function legalArgNum(argNum) {
  * @param {String} target
  */
 function copy(origin, target) {
-
-    console.log(origin + 'is not exist......');
-    console.log(target + 'is not exist......');
-
     if (!ph.existsSync(origin)) {
         console.log(origin + 'is not exist......');
     }
 
     if (!ph.existsSync(target)) {
-        //fs.mkdirSync(target, 0755)
         mkdir(target, 0);
         console.log('   \x1b[36mmakedir\x1b[0m : ' + target);
     }
