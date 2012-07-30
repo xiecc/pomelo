@@ -333,26 +333,24 @@ function stop() {
 // list the servers of the program
 function list() {
     if (ph.existsSync('./tmp')) {
-
         fs.readFile('./tmp', function (err, data) {
             if (err) throw err;
             process.kill(data, 'SIGINT');
 
-            var client = require('socket.io-client');
-            var socket = client.connect('http://127.0.0.1:3000');
-            socket.on('connect', function () {
-                socket.emit('ferret', 'tobi', function (data) {
-                    console.log(data);
-                    process.exit(1);
-                });
-            });
-
         });
+
+              var client = require('socket.io-client');
+                    var socket = client.connect('http://127.0.0.1:3000');
+                    socket.on('connect', function () {
+                        socket.emit('ferret', 'tobi', function (data) {
+                            console.log(data);
+                            process.exit(1);
+                        });
+                    });
     }
     else {
         abort("There is no starting program");
     }
-
 }
 
 
@@ -369,12 +367,11 @@ function kill() {
                     if (err) throw err;
                     console.log("closing the program......\nplease wait......");
                     process.kill(data, 'SIGHUP');
+                    setTimeout(function(){
+                    exec('kill -9 '+data);
+                    },6000);
                 });
-                setTimeout(function () {
-                    fs.unlinkSync('./tmp');
-                }, 120000);
             }
-
         });
     }
     else {
