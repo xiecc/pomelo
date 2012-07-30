@@ -367,7 +367,7 @@ function kill() {
             else {
                 fs.readFile('./tmp', function (err, data) {
                     if (err) throw err;
-                    console.log("Closing the program......");
+                    console.log("closing the program......\nplease wait......");
                     process.kill(data, 'SIGHUP');
                 });
                 setTimeout(function () {
