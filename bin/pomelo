@@ -241,7 +241,6 @@ function start() {
             if (!args[0].startWith('--debug='))
                 abort("The start command  arguments is error.");
 
-
     function parseServer(str) {
         if (str.indexOf(':') < 0 || str.indexOf(':') != str.lastIndexOf(':'))
             abort("The debug argument is error.");
@@ -256,7 +255,6 @@ function start() {
             abort("The debug port is out of range.");
     }
 
-
     if (ph.existsSync('./app.js')) {
         if (ph.existsSync(process.cwd() + '/tmp')) {
             var ex = exec('ps -p ' + fs.readFileSync(process.cwd() + '/tmp'), function (error, stdout, stderr) {
@@ -265,21 +263,22 @@ function start() {
                 }
             });
         }
+
         var ls;
         switch (args.length) {
             case 0:
-                ls = exec('node app.js');
+                ls = spawn('node', ['app.js']);
                 break;
             case 1:
                 if (args[0] === 'development' || args[0] === 'production') {
-                    ls = exec('node app.js --env ' + args[0]);
+                    ls = spawn('node', ['app.js', 'env', args[0]]);
                 }
                 else {
                     parseServer(args[0]);
                     if (legalServerId(args[0], serverId) === false) {
                         abort("The serverId does not exist.");
                     }
-                    ls = exec('node app.js --env  development  --serverType master  --serverId master-server-1  --debugServerId ' + serverId + ' --debugPort ' + port);
+                    ls = spawn('node', ['app.js', 'env', 'development', 'serverType', 'master', 'serverId'  , 'master-server-1', 'debugServerId', serverId, 'debugPort', port]);
                 }
                 break;
             case 2:
@@ -287,7 +286,7 @@ function start() {
                 if (legalServerId(args[0], serverId) === false) {
                     abort("The serverId does not exist.");
                 }
-                ls = exec('node app.js --env  development  --serverType master  --serverId master-server-1  --debugServerId ' + serverId + ' --debugPort ' + port);
+                ls = spawn('node', ['app.js', 'env', 'development', 'serverType', 'master', 'serverId'  , 'master-server-1', 'debugServerId', serverId, 'debugPort', port]);
                 break;
             default:
                 abort("The start command  arguments is error.");
@@ -304,9 +303,7 @@ function start() {
         ls.on('exit', function (code) {
             console.log('child process exited with code ' + code);
         });
-
     }
-
     else {
         abort("Please go to your pomelo workspace to start the program");
     }
@@ -339,18 +336,15 @@ function list() {
         fs.readFile('./tmp', function (err, data) {
             if (err) throw err;
             process.kill(data, 'SIGINT');
-
+            var client = require('socket.io-client');
+            var socket = client.connect('http://127.0.0.1:9999');
+            socket.on('connect', function () {
+                socket.on('info', function (data) {
+                    console.log(data);
+                    process.exit(1);
+                });
+            });
         });
-        /**
-         var client = require('socket.io-client');
-         var socket = client.connect('http://127.0.0.1:3000');
-         socket.on('connect', function () {
-         socket.emit('ferret', 'tobi', function (data) {
-         console.log(data);
-         process.exit(1);
-         });
-         });
-         */
     }
     else {
         abort("There is no starting program");
