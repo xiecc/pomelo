@@ -339,8 +339,9 @@ function list() {
             var client = require('socket.io-client');
             var socket = client.connect('http://127.0.0.1:9999');
             socket.on('connect', function () {
+              socket.emit('message',Date.now());
                 socket.on('info', function (data) {
-                    console.log(data);
+                    console.log(data.info);
                     process.exit(1);
                 });
             });
