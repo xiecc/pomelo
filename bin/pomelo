@@ -268,15 +268,18 @@ function start() {
         var ls;
         switch (args.length) {
             case 0:
-                ls = spawn('node', ['app.js']);
+                ls = exec('node app.js');
                 break;
             case 1:
                 if (args[0] === 'development' || args[0] === 'production') {
-                    ls = spawn('node', ['app.js', args[0]]);
+                    ls = exec('node app.js --env ' + args[0]);
                 }
                 else {
                     parseServer(args[0]);
-                    ls = spawn('node', ['app.js', 'development', 'master', 'master-server-1', serverId, port]);
+                    if (legalServerId(args[0], serverId) === false) {
+                        abort("The serverId does not exist.");
+                    }
+                    ls = exec('node app.js --env  development  --serverType master  --serverId master-server-1  --debugServerId ' + serverId + ' --debugPort ' + port);
                 }
                 break;
             case 2:
@@ -284,7 +287,7 @@ function start() {
                 if (legalServerId(args[0], serverId) === false) {
                     abort("The serverId does not exist.");
                 }
-                ls = spawn('node', ['app.js', args[0], 'master', 'master-server-1', serverId, port]);
+                ls = exec('node app.js --env  development  --serverType master  --serverId master-server-1  --debugServerId ' + serverId + ' --debugPort ' + port);
                 break;
             default:
                 abort("The start command  arguments is error.");
@@ -338,15 +341,16 @@ function list() {
             process.kill(data, 'SIGINT');
 
         });
-
-              var client = require('socket.io-client');
-                    var socket = client.connect('http://127.0.0.1:3000');
-                    socket.on('connect', function () {
-                        socket.emit('ferret', 'tobi', function (data) {
-                            console.log(data);
-                            process.exit(1);
-                        });
-                    });
+        /**
+         var client = require('socket.io-client');
+         var socket = client.connect('http://127.0.0.1:3000');
+         socket.on('connect', function () {
+         socket.emit('ferret', 'tobi', function (data) {
+         console.log(data);
+         process.exit(1);
+         });
+         });
+         */
     }
     else {
         abort("There is no starting program");
@@ -367,9 +371,9 @@ function kill() {
                     if (err) throw err;
                     console.log("closing the program......\nplease wait......");
                     process.kill(data, 'SIGHUP');
-                    setTimeout(function(){
-                    exec('kill -9 '+data);
-                    },6000);
+                    setTimeout(function () {
+                        exec('kill -9 ' + data);
+                    }, 6000);
                 });
             }
         });
