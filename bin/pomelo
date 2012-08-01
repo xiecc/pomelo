@@ -7,25 +7,10 @@
 var fs = require('fs')
     , os = require('os')
     , cp = require('child_process')
-    , util = require('util')
+    , utils = require('../lib/util/utils')
     , ph = require('path')
     , exec = cp.exec
     , spawn = cp.spawn;
-
-/**
- * Add function startWith to String Object
- *  @param {String} str
- *
- */
-String.prototype.startWith = function (str) {
-    if (str == null || str == "" || this.length == 0 || str.length > this.length)
-        return false;
-    if (this.substr(0, str.length) == str)
-        return true;
-    else
-        return false;
-    return true;
-}
 
 /**
  * Package information.
@@ -56,7 +41,6 @@ var args = process.argv.slice(2)
 // Get the name of Project
 var name = args[1];
 
-
 /**
  * Usage documentation.
  */
@@ -72,7 +56,6 @@ var usage = ''
         + '    help                      output help information\n'
         + '    [option]                  --debug=serverId:port'
     ;
-
 
 /**
  * package.json template.
@@ -108,7 +91,6 @@ json += '}' + eol;
 /**
  * App template.
  */
-
 var app = [
     ''
     , '/**'
@@ -164,11 +146,11 @@ switch (arg) {
         break;
     case 'stop':
         legalArgNum(0);
-        stop();
+        terminal('stop');
         break;
     case 'kill':
         legalArgNum(0);
-        kill();
+        terminal('kill');
         break;
     default:
         abort("The command is error format.");
@@ -177,7 +159,6 @@ switch (arg) {
 
 
 // Init application
-
 function init() {
     emptyDirectory(path, function (empty) {
         if (empty) {
@@ -197,33 +178,28 @@ function init() {
     });
 }
 
-
 /**
  * Create application at the given directory `path`.
  *
  * @param {String} path
  */
-
 function createApplicationAt(path) {
     copy(__dirname + '/../template/', path);
+    mkdir(name + '/logs', 0);
     write(path + '/app.js', app);
     write(path + '/package.json', json);
 }
 
 // Add node dependency to the application
-
 function addDependency() {
     //check if the current dir has the file package.json
     if (ph.existsSync('./package.json')) {
-        var ls = spawn('npm', ['install', '-d']);
-        ls.stdout.on('data', function (data) {
-            console.log('stdout: ' + data);
-        });
-        ls.stderr.on('data', function (data) {
-            console.log('stderr: ' + data);
-        });
-        ls.on('exit', function (code) {
-            console.log('child process exited with code ' + code);
+        exec('cd ' + name + ' && npm install -d', function (error, stdout, stderr) {
+            console.log('stdout:' + stdout);
+            console.log('stderr:' + stderr);
+            if (error !== null) {
+                console.log('exec error: ' + error);
+            }
         });
     }
     else {
@@ -233,16 +209,14 @@ function addDependency() {
 
 // start the program
 function start() {
-
     //debug args
     var serverId = " ";
     var port = " ";
 
     if (args.length != 0)
         if (args[0] != 'production' && args[0] != 'development')
-            if (!args[0].startWith('--debug='))
+            if (!utils.startWith(args[0],'--debug='))
                 abort("The start command  arguments is error.");
-
 
     function parseServer(str) {
         if (str.indexOf(':') < 0 || str.indexOf(':') != str.lastIndexOf(':'))
@@ -258,7 +232,6 @@ function start() {
             abort("The debug port is out of range.");
     }
 
-
     if (ph.existsSync('./app.js')) {
         if (ph.existsSync(process.cwd() + '/tmp')) {
             var ex = exec('ps -p ' + fs.readFileSync(process.cwd() + '/tmp'), function (error, stdout, stderr) {
@@ -267,6 +240,7 @@ function start() {
                 }
             });
         }
+
         var ls;
         switch (args.length) {
             case 0:
@@ -274,11 +248,14 @@ function start() {
                 break;
             case 1:
                 if (args[0] === 'development' || args[0] === 'production') {
-                    ls = spawn('node', ['app.js', args[0]]);
+                    ls = spawn('node', ['app.js', 'env', args[0]]);
                 }
                 else {
                     parseServer(args[0]);
-                    ls = spawn('node', ['app.js', 'development', 'master', 'master-server-1', serverId, port]);
+                    if (legalServerId(args[0], serverId) === false) {
+                        abort("The serverId does not exist.");
+                    }
+                    ls = spawn('node', ['app.js', 'env', 'development', 'serverType', 'master', 'serverId'  , 'master-server-1', 'debugServerId', serverId, 'debugPort', port]);
                 }
                 break;
             case 2:
@@ -286,7 +263,7 @@ function start() {
                 if (legalServerId(args[0], serverId) === false) {
                     abort("The serverId does not exist.");
                 }
-                ls = spawn('node', ['app.js', args[0], 'master', 'master-server-1', serverId, port]);
+                ls = spawn('node', ['app.js', 'env', 'development', 'serverType', 'master', 'serverId'  , 'master-server-1', 'debugServerId', serverId, 'debugPort', port]);
                 break;
             default:
                 abort("The start command  arguments is error.");
@@ -303,34 +280,11 @@ function start() {
         ls.on('exit', function (code) {
             console.log('child process exited with code ' + code);
         });
-
     }
-
     else {
         abort("Please go to your pomelo workspace to start the program");
     }
 }
-
-
-// stop the program
-function stop() {
-
-    if (ph.existsSync('./tmp')) {
-        fs.readFile('./tmp', function (err, data) {
-            if (err) throw err;
-            console.log("Closing the program......");
-            process.kill(data, 'SIGHUP');
-        });
-        fs.unlinkSync('./tmp');
-
-    }
-    else {
-        abort("There is no starting program");
-    }
-
-
-}
-
 
 // list the servers of the program
 function list() {
@@ -339,10 +293,11 @@ function list() {
             if (err) throw err;
             process.kill(data, 'SIGINT');
             var client = require('socket.io-client');
-            var socket = client.connect('http://127.0.0.1:3000');
+            var socket = client.connect('http://127.0.0.1:9999');
             socket.on('connect', function () {
-                socket.emit('ferret', 'tobi', function (data) {
-                    console.log(data);
+              socket.emit('message',Date.now());
+                socket.on('info', function (data) {
+                    console.log(data.info);
                     process.exit(1);
                 });
             });
@@ -351,24 +306,28 @@ function list() {
     else {
         abort("There is no starting program");
     }
-
 }
 
 
-// kill the program
-function kill() {
+// stop or kill the program
+function terminal(signal) {
     if (ph.existsSync('./tmp')) {
-        exec('ps -p ' + fs.readFileSync('./tmp'), function (error, stdout, stderr) {
+        var ex = exec('ps -p ' + fs.readFileSync('./tmp'), function (error, stdout, stderr) {
             if (stdout.length <= 28) {
+                fs.unlinkSync('./tmp');
                 abort("The program is stopped.");
             }
             else {
                 fs.readFile('./tmp', function (err, data) {
                     if (err) throw err;
-                    spawn('kill', ['-9'].concat(data)).on('exit', function () {
-                        fs.unlinkSync('./tmp');
-                        abort("The program is killed.");
-                    });
+                    console.log("closing the program......\nplease wait......");
+                    if(signal==='kill')
+                        process.kill(data, 'SIGHUP');
+                    else
+                        process.kill(data, 'SIGTERM');
+                    setTimeout(function () {
+                        exec('kill -9 ' + data);
+                    }, 6000);
                 });
             }
         });
@@ -377,7 +336,6 @@ function kill() {
         abort("There is no starting program");
     }
 }
-
 
 /**
  * Check if the given directory `path` is empty.
@@ -393,7 +351,6 @@ function emptyDirectory(path, fn) {
     });
 }
 
-
 /**
  * echo str > path.
  *
@@ -405,7 +362,6 @@ function write(path, str) {
     fs.writeFile(path, str);
     console.log('   \x1b[36mcreatefile\x1b[0m : ' + path);
 }
-
 
 /**
  * Prompt confirmation with the given `msg`.
@@ -442,7 +398,6 @@ function prompt(msg, fn) {
     }).resume();
 }
 
-
 /**
  * Exit with the given `str`.
  *
@@ -472,16 +427,11 @@ function legalArgNum(argNum) {
  * @param {String} target
  */
 function copy(origin, target) {
-
-    console.log(origin + 'is not exist......');
-    console.log(target + 'is not exist......');
-
     if (!ph.existsSync(origin)) {
         console.log(origin + 'is not exist......');
     }
 
     if (!ph.existsSync(target)) {
-        //fs.mkdirSync(target, 0755)
         mkdir(target, 0);
         console.log('   \x1b[36mmakedir\x1b[0m : ' + target);
     }
@@ -502,7 +452,6 @@ function copy(origin, target) {
                 copy(oCurrent, tCurrent);
             }
         }
-
     });
 }
 
@@ -524,12 +473,10 @@ function mkdir(url, mode, cb) {
     if (arr[0] == "..") {
         arr.splice(0, 2, arr[0] + "/" + arr[1]);
     }
-
     function inner(cur) {
         if (!path.existsSync(cur)) {
             fs.mkdirSync(cur, mode);
         }
-
         if (arr.length) {
             inner(cur + "/" + arr.shift());
         }
@@ -537,7 +484,6 @@ function mkdir(url, mode, cb) {
             cb();
         }
     }
-
     arr.length && inner(arr.shift());
     console.log('   \x1b[36mmakedir\x1b[0m : ' + url);
 }
@@ -582,6 +528,5 @@ function legalServerId(mode, serverId) {
         }
         return false;
     }
-
     return readJson(mode, str);
 }
