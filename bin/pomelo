@@ -7,25 +7,10 @@
 var fs = require('fs')
     , os = require('os')
     , cp = require('child_process')
-    , util = require('util')
+    , utils = require('../lib/util/utils')
     , ph = require('path')
     , exec = cp.exec
     , spawn = cp.spawn;
-
-/**
- * Add function startWith to String Object
- *  @param {String} str
- *
- */
-String.prototype.startWith = function (str) {
-    if (str == null || str == "" || this.length == 0 || str.length > this.length)
-        return false;
-    if (this.substr(0, str.length) == str)
-        return true;
-    else
-        return false;
-    return true;
-}
 
 /**
  * Package information.
@@ -56,7 +41,6 @@ var args = process.argv.slice(2)
 // Get the name of Project
 var name = args[1];
 
-
 /**
  * Usage documentation.
  */
@@ -72,7 +56,6 @@ var usage = ''
         + '    help                      output help information\n'
         + '    [option]                  --debug=serverId:port'
     ;
-
 
 /**
  * package.json template.
@@ -108,7 +91,6 @@ json += '}' + eol;
 /**
  * App template.
  */
-
 var app = [
     ''
     , '/**'
@@ -164,11 +146,11 @@ switch (arg) {
         break;
     case 'stop':
         legalArgNum(0);
-        stop();
+        terminal('stop');
         break;
     case 'kill':
         legalArgNum(0);
-        kill();
+        terminal('kill');
         break;
     default:
         abort("The command is error format.");
@@ -177,7 +159,6 @@ switch (arg) {
 
 
 // Init application
-
 function init() {
     emptyDirectory(path, function (empty) {
         if (empty) {
@@ -197,13 +178,11 @@ function init() {
     });
 }
 
-
 /**
  * Create application at the given directory `path`.
  *
  * @param {String} path
  */
-
 function createApplicationAt(path) {
     copy(__dirname + '/../template/', path);
     mkdir(name + '/logs', 0);
@@ -212,7 +191,6 @@ function createApplicationAt(path) {
 }
 
 // Add node dependency to the application
-
 function addDependency() {
     //check if the current dir has the file package.json
     if (ph.existsSync('./package.json')) {
@@ -231,14 +209,13 @@ function addDependency() {
 
 // start the program
 function start() {
-
     //debug args
     var serverId = " ";
     var port = " ";
 
     if (args.length != 0)
         if (args[0] != 'production' && args[0] != 'development')
-            if (!args[0].startWith('--debug='))
+            if (!utils.startWith(args[0],'--debug='))
                 abort("The start command  arguments is error.");
 
     function parseServer(str) {
@@ -309,27 +286,6 @@ function start() {
     }
 }
 
-
-// stop the program
-function stop() {
-
-    if (ph.existsSync('./tmp')) {
-        fs.readFile('./tmp', function (err, data) {
-            if (err) throw err;
-            console.log("Closing the program......");
-            process.kill(data, 'SIGHUP');
-        });
-        fs.unlinkSync('./tmp');
-
-    }
-    else {
-        abort("There is no starting program");
-    }
-
-
-}
-
-
 // list the servers of the program
 function list() {
     if (ph.existsSync('./tmp')) {
@@ -353,8 +309,8 @@ function list() {
 }
 
 
-// kill the program
-function kill() {
+// stop or kill the program
+function terminal(signal) {
     if (ph.existsSync('./tmp')) {
         var ex = exec('ps -p ' + fs.readFileSync('./tmp'), function (error, stdout, stderr) {
             if (stdout.length <= 28) {
@@ -365,7 +321,10 @@ function kill() {
                 fs.readFile('./tmp', function (err, data) {
                     if (err) throw err;
                     console.log("closing the program......\nplease wait......");
-                    process.kill(data, 'SIGHUP');
+                    if(signal==='kill')
+                        process.kill(data, 'SIGHUP');
+                    else
+                        process.kill(data, 'SIGTERM');
                     setTimeout(function () {
                         exec('kill -9 ' + data);
                     }, 6000);
@@ -377,7 +336,6 @@ function kill() {
         abort("There is no starting program");
     }
 }
-
 
 /**
  * Check if the given directory `path` is empty.
@@ -393,7 +351,6 @@ function emptyDirectory(path, fn) {
     });
 }
 
-
 /**
  * echo str > path.
  *
@@ -405,7 +362,6 @@ function write(path, str) {
     fs.writeFile(path, str);
     console.log('   \x1b[36mcreatefile\x1b[0m : ' + path);
 }
-
 
 /**
  * Prompt confirmation with the given `msg`.
@@ -441,7 +397,6 @@ function prompt(msg, fn) {
         fn(data);
     }).resume();
 }
-
 
 /**
  * Exit with the given `str`.
@@ -497,7 +452,6 @@ function copy(origin, target) {
                 copy(oCurrent, tCurrent);
             }
         }
-
     });
 }
 
@@ -519,12 +473,10 @@ function mkdir(url, mode, cb) {
     if (arr[0] == "..") {
         arr.splice(0, 2, arr[0] + "/" + arr[1]);
     }
-
     function inner(cur) {
         if (!path.existsSync(cur)) {
             fs.mkdirSync(cur, mode);
         }
-
         if (arr.length) {
             inner(cur + "/" + arr.shift());
         }
@@ -532,7 +484,6 @@ function mkdir(url, mode, cb) {
             cb();
         }
     }
-
     arr.length && inner(arr.shift());
     console.log('   \x1b[36mmakedir\x1b[0m : ' + url);
 }
@@ -577,6 +528,5 @@ function legalServerId(mode, serverId) {
         }
         return false;
     }
-
     return readJson(mode, str);
 }
