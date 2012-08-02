@@ -14,6 +14,7 @@
         "data-sync":">=0.0.10",
         "v8-profiler":">=3.6.2-1",
         "ws":">=0.4.10",
+        "pomelo-protocol":">=0.0.1",
         "module-loader":">=0.0.1",
         "local-proxy":">=0.0.1",
         "rpc-gateway":"0.0.4",
