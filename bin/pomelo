@@ -36,6 +36,8 @@ var eol = os.platform
 // list command socket address
 var LIST_COMMAND_ADDRESS = 'http://127.0.0.1:9999';
 
+var TIME_KILL_WAIT = 6000;
+
 
 // Parse arguments
 
@@ -336,7 +338,7 @@ function terminal(signal) {
                         process.kill(data, 'SIGTERM');
                     setTimeout(function () {
                         exec('kill -9 ' + data);
-                    }, 6000);
+                    }, TIME_KILL_WAIT);
                 });
             }
         });
