@@ -44,6 +44,11 @@ var args = process.argv.slice(2)
 
 // Get the name of Project
 var name = args[1];
+var name_path = name;
+if(name_path && name_path.indexOf('/')){
+ var str = name_path.split('/');
+     name = str[str.length-1];
+}
 
 /**
  * Usage documentation.
@@ -189,7 +194,7 @@ function init() {
  */
 function createApplicationAt(path) {
     copy(__dirname + '/../template/', path);
-    mkdir(name + '/logs', 0);
+    mkdir(name_path + '/logs', 0);
     write(path + '/app.js', app);
     write(path + '/package.json', json);
 }
@@ -198,7 +203,7 @@ function createApplicationAt(path) {
 function addDependency() {
     //check if the current dir has the file package.json
     if (ph.existsSync('./package.json')) {
-        exec('cd ' + name + ' && npm install -d', function (error, stdout, stderr) {
+        exec('cd ' + name_path + ' && npm install -d', function (error, stdout, stderr) {
             console.log('stdout:' + stdout);
             console.log('stderr:' + stderr);
             if (error !== null) {
