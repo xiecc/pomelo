@@ -33,6 +33,12 @@ var eol = os.platform
     : '\n';
 
 
+// list command socket address
+var LIST_COMMAND_ADDRESS = 'http://127.0.0.1:9999';
+
+var TIME_KILL_WAIT = 6000;
+
+
 // Parse arguments
 
 var args = process.argv.slice(2)
@@ -40,6 +46,11 @@ var args = process.argv.slice(2)
 
 // Get the name of Project
 var name = args[1];
+var name_path = name;
+if(name_path && name_path.indexOf('/')){
+ var str = name_path.split('/');
+     name = str[str.length-1];
+}
 
 /**
  * Usage documentation.
@@ -185,7 +196,7 @@ function init() {
  */
 function createApplicationAt(path) {
     copy(__dirname + '/../template/', path);
-    mkdir(name + '/logs', 0);
+    mkdir(name_path + '/logs', 0);
     write(path + '/app.js', app);
     write(path + '/package.json', json);
 }
@@ -194,7 +205,7 @@ function createApplicationAt(path) {
 function addDependency() {
     //check if the current dir has the file package.json
     if (ph.existsSync('./package.json')) {
-        exec('cd ' + name + ' && npm install -d', function (error, stdout, stderr) {
+        exec('cd ' + name_path + ' && npm install -d', function (error, stdout, stderr) {
             console.log('stdout:' + stdout);
             console.log('stderr:' + stderr);
             if (error !== null) {
@@ -293,7 +304,7 @@ function list() {
             if (err) throw err;
             process.kill(data, 'SIGINT');
             var client = require('socket.io-client');
-            var socket = client.connect('http://127.0.0.1:9999');
+            var socket = client.connect(LIST_COMMAND_ADDRESS);
             socket.on('connect', function () {
               socket.emit('message',Date.now());
                 socket.on('info', function (data) {
@@ -327,7 +338,7 @@ function terminal(signal) {
                         process.kill(data, 'SIGTERM');
                     setTimeout(function () {
                         exec('kill -9 ' + data);
-                    }, 6000);
+                    }, TIME_KILL_WAIT);
                 });
             }
         });
