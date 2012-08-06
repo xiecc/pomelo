@@ -274,7 +274,7 @@ function start() {
                 if (legalServerId(args[0], serverId) === false) {
                     abort("The serverId does not exist.");
                 }
-                ls = spawn('node', ['app.js', 'env', 'development', 'serverType', 'master', 'serverId'  , 'master-server-1', 'debugServerId', serverId, 'debugPort', port]);
+                ls = spawn('node', ['app.js', 'env', args[0], 'serverType', 'master', 'serverId'  , 'master-server-1', 'debugServerId', serverId, 'debugPort', port]);
                 break;
             default:
                 abort("The start command  arguments is error.");
