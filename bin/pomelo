@@ -33,6 +33,10 @@ var eol = os.platform
     : '\n';
 
 
+// list command socket address
+var LIST_COMMAND_ADDRESS = 'http://127.0.0.1:9999';
+
+
 // Parse arguments
 
 var args = process.argv.slice(2)
@@ -293,7 +297,7 @@ function list() {
             if (err) throw err;
             process.kill(data, 'SIGINT');
             var client = require('socket.io-client');
-            var socket = client.connect('http://127.0.0.1:9999');
+            var socket = client.connect(LIST_COMMAND_ADDRESS);
             socket.on('connect', function () {
               socket.emit('message',Date.now());
                 socket.on('info', function (data) {
