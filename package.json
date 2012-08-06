@@ -18,7 +18,8 @@
       "socket.io-client":">=0.9.4",
       "crc":">=0.0.1", 
       "pomelo-loader": ">=0.0.1", 
-      "pomelo-rpc": ">=0.0.1"
+      "pomelo-rpc": ">=0.0.1", 
+      "pomelo-protocol": ">=0.0.1"
   },
   "devDependencies":{
       "should":">=0.0.1",
