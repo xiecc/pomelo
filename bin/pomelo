@@ -47,9 +47,19 @@ var args = process.argv.slice(2)
 // Get the name of Project
 var name = args[1];
 var name_path = name;
-if(name_path && name_path.indexOf('/')){
- var str = name_path.split('/');
-     name = str[str.length-1];
+if (name_path && name_path.indexOf('/')) {
+    var str = name_path.split('/');
+    name = str[str.length - 1];
+}
+var cwd = process.cwd();
+if (name === '.') {
+    var arr = cwd.split('/');
+    name = arr[arr.length - 1];
+}
+
+if (name === '..') {
+    var arr = cwd.split('/');
+    name = arr[arr.length - 2];
 }
 
 
@@ -194,8 +204,8 @@ function init() {
  * @param {String} path
  */
 function createApplicationAt(path) {
-    copy(__dirname + '/../template/', path);
-    mkdir(path+'/logs',0);
+    // copy(__dirname + '/../template/', path);
+    mkdir(path + '/logs', 0);
     write(path + '/app.js', app);
     write(path + '/package.json', json);
 }
@@ -209,7 +219,7 @@ function start() {
 
     if (args.length != 0)
         if (args[0] != 'production' && args[0] != 'development')
-            if (!utils.startWith(args[0],'--debug='))
+            if (!utils.startWith(args[0], '--debug='))
                 abort("The start command  arguments is error.");
 
     function parseServer(str) {
@@ -289,7 +299,7 @@ function list() {
             var client = require('socket.io-client');
             var socket = client.connect(LIST_COMMAND_ADDRESS);
             socket.on('connect', function () {
-              socket.emit('message',Date.now());
+                socket.emit('message', Date.now());
                 socket.on('info', function (data) {
                     console.log(data.info);
                     process.exit(1);
@@ -315,7 +325,7 @@ function terminal(signal) {
                 fs.readFile('./tmp', function (err, data) {
                     if (err) throw err;
                     console.log("closing the program......\nplease wait......");
-                    if(signal==='kill')
+                    if (signal === 'kill')
                         process.kill(data, 'SIGHUP');
                     else
                         process.kill(data, 'SIGTERM');
@@ -478,6 +488,7 @@ function mkdir(url, mode, cb) {
             cb();
         }
     }
+
     arr.length && inner(arr.shift());
     console.log('   \x1b[36mmakedir\x1b[0m : ' + url);
 }
@@ -522,5 +533,6 @@ function legalServerId(mode, serverId) {
         }
         return false;
     }
+
     return readJson(mode, str);
 }
