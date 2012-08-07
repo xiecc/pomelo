@@ -52,6 +52,7 @@ if(name_path && name_path.indexOf('/')){
      name = str[str.length-1];
 }
 
+
 /**
  * Usage documentation.
  */
@@ -174,13 +175,11 @@ function init() {
     emptyDirectory(path, function (empty) {
         if (empty) {
             createApplicationAt(path);
-            addDependency();
         } else {
             confirm('destination is not empty, continue? ', function (ok) {
                 if (ok) {
                     process.stdin.destroy();
                     createApplicationAt(path);
-                    addDependency();
                 } else {
                     abort('aborting');
                 }
@@ -196,27 +195,11 @@ function init() {
  */
 function createApplicationAt(path) {
     copy(__dirname + '/../template/', path);
-    mkdir(name_path + '/logs', 0);
+    mkdir(path+'/logs',0);
     write(path + '/app.js', app);
     write(path + '/package.json', json);
 }
 
-// Add node dependency to the application
-function addDependency() {
-    //check if the current dir has the file package.json
-    if (ph.existsSync('./package.json')) {
-        exec('cd ' + name_path + ' && npm install -d', function (error, stdout, stderr) {
-            console.log('stdout:' + stdout);
-            console.log('stderr:' + stderr);
-            if (error !== null) {
-                console.log('exec error: ' + error);
-            }
-        });
-    }
-    else {
-        abort("Please go to your pomelo workspace to init the program");
-    }
-}
 
 // start the program
 function start() {
