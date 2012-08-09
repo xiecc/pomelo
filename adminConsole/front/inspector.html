@@ -227,6 +227,7 @@ var loading = function(){
 		socket.emit('announce_web_client');
 		socket.emit('webMessage', { method : 'getNodes'});
 		socket.on('getNodes', function(msg) {
+      selectServer.options.length = 0;
 			for (var index = 0;index<msg.serverArray.length;index++){
 				var server = msg.serverArray[index];
 				var option = new Option(server.name,server.serverId);
