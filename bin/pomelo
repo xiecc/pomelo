@@ -47,10 +47,21 @@ var args = process.argv.slice(2)
 // Get the name of Project
 var name = args[1];
 var name_path = name;
-if(name_path && name_path.indexOf('/')){
- var str = name_path.split('/');
-     name = str[str.length-1];
+if (name_path && name_path.indexOf('/')) {
+    var str = name_path.split('/');
+    name = str[str.length - 1];
 }
+var cwd = process.cwd();
+if (name === '.') {
+    var arr = cwd.split('/');
+    name = arr[arr.length - 1];
+}
+
+if (name === '..') {
+    var arr = cwd.split('/');
+    name = arr[arr.length - 2];
+}
+
 
 /**
  * Usage documentation.
@@ -174,13 +185,11 @@ function init() {
     emptyDirectory(path, function (empty) {
         if (empty) {
             createApplicationAt(path);
-            addDependency();
         } else {
             confirm('destination is not empty, continue? ', function (ok) {
                 if (ok) {
                     process.stdin.destroy();
                     createApplicationAt(path);
-                    addDependency();
                 } else {
                     abort('aborting');
                 }
@@ -195,28 +204,12 @@ function init() {
  * @param {String} path
  */
 function createApplicationAt(path) {
-    copy(__dirname + '/../template/', path);
-    mkdir(name_path + '/logs', 0);
+    // copy(__dirname + '/../template/', path);
+    mkdir(path + '/logs', 0);
     write(path + '/app.js', app);
     write(path + '/package.json', json);
 }
 
-// Add node dependency to the application
-function addDependency() {
-    //check if the current dir has the file package.json
-    if (ph.existsSync('./package.json')) {
-        exec('cd ' + name_path + ' && npm install -d', function (error, stdout, stderr) {
-            console.log('stdout:' + stdout);
-            console.log('stderr:' + stderr);
-            if (error !== null) {
-                console.log('exec error: ' + error);
-            }
-        });
-    }
-    else {
-        abort("Please go to your pomelo workspace to init the program");
-    }
-}
 
 // start the program
 function start() {
@@ -226,7 +219,7 @@ function start() {
 
     if (args.length != 0)
         if (args[0] != 'production' && args[0] != 'development')
-            if (!utils.startWith(args[0],'--debug='))
+            if (!utils.startWith(args[0], '--debug='))
                 abort("The start command  arguments is error.");
 
     function parseServer(str) {
@@ -306,7 +299,7 @@ function list() {
             var client = require('socket.io-client');
             var socket = client.connect(LIST_COMMAND_ADDRESS);
             socket.on('connect', function () {
-              socket.emit('message',Date.now());
+                socket.emit('message', Date.now());
                 socket.on('info', function (data) {
                     console.log(data.info);
                     process.exit(1);
@@ -332,7 +325,7 @@ function terminal(signal) {
                 fs.readFile('./tmp', function (err, data) {
                     if (err) throw err;
                     console.log("closing the program......\nplease wait......");
-                    if(signal==='kill')
+                    if (signal === 'kill')
                         process.kill(data, 'SIGHUP');
                     else
                         process.kill(data, 'SIGTERM');
@@ -495,6 +488,7 @@ function mkdir(url, mode, cb) {
             cb();
         }
     }
+
     arr.length && inner(arr.shift());
     console.log('   \x1b[36mmakedir\x1b[0m : ' + url);
 }
@@ -539,5 +533,6 @@ function legalServerId(mode, serverId) {
         }
         return false;
     }
+
     return readJson(mode, str);
 }
