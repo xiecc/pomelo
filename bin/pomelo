@@ -204,7 +204,7 @@ function init() {
  * @param {String} path
  */
 function createApplicationAt(path) {
-    // copy(__dirname + '/../template/', path);
+    copy(__dirname + '/../template/', path);
     mkdir(path + '/logs', 0);
     write(path + '/app.js', app);
     write(path + '/package.json', json);
