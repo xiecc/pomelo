@@ -262,16 +262,21 @@ function terminal(signal) {
                         socket.on('connect', function () {
                             socket.emit('kill', Date.now());
                         });
+                         setTimeout(function () {
+                                                exec('kill -9 ' + data);
+                                                process.exit(1);
+                                            }, TIME_KILL_WAIT);
                     }
                     else {
                         socket.on('connect', function () {
                             socket.emit('stop', Date.now());
                         });
+                         setTimeout(function () {
+                                                exec('kill -9 ' + data);
+                                                process.exit(1);
+                                            }, TIME_STOP_WAIT);
                     }
-                    setTimeout(function () {
-                        exec('kill -9 ' + data);
-                        process.exit(1);
-                    }, TIME_STOP_WAIT);
+
                 });
             }
         });
