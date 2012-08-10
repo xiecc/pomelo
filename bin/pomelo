@@ -50,7 +50,7 @@ var version = pkg.version;
 /**
  * Parse command arguments.
  */
-(function(){
+(function () {
     var arg = args.shift();
     switch (arg) {
         case 'help':
@@ -114,7 +114,7 @@ function init(path) {
  * @param {String} path
  */
 function createApplicationAt(path) {
-    var name ='';
+    var name = '';
     var cwd = process.cwd();
     if (path.indexOf('/')) {
         var str = path.split('/');
@@ -262,19 +262,19 @@ function terminal(signal) {
                         socket.on('connect', function () {
                             socket.emit('kill', Date.now());
                         });
-                         setTimeout(function () {
-                                                exec('kill -9 ' + data);
-                                                process.exit(1);
-                                            }, TIME_KILL_WAIT);
+                        setTimeout(function () {
+                            exec('kill -9 ' + data);
+                            process.exit(1);
+                        }, TIME_KILL_WAIT);
                     }
                     else {
                         socket.on('connect', function () {
                             socket.emit('stop', Date.now());
                         });
-                         setTimeout(function () {
-                                                exec('kill -9 ' + data);
-                                                process.exit(1);
-                                            }, TIME_STOP_WAIT);
+                        setTimeout(function () {
+                            exec('kill -9 ' + data);
+                            process.exit(1);
+                        }, TIME_STOP_WAIT);
                     }
 
                 });
