@@ -19,7 +19,7 @@ var args = process.argv.slice(2);
 var TIME_INIT = 1000;
 var TIME_KILL_WAIT = 6000;
 var TIME_STOP_WAIT = 10000;
-var LIST_COMMAND_ADDRESS = 'http://127.0.0.1:9999';
+var LIST_COMMAND_ADDRESS = 'http://127.0.0.1:3005';
 
 /**
  * Usage documentation.
