@@ -6,45 +6,20 @@
 var fs = require('fs')
     , os = require('os')
     , cp = require('child_process')
+    , client = require('socket.io-client')
     , utils = require('../lib/util/utils')
     , ph = require('path')
     , exec = cp.exec
     , spawn = cp.spawn;
 
 /**
- * Package information.
+ *  Common Variables
  */
-var pkg = JSON.parse(fs.readFileSync(__dirname + '/../package.json'));
-
-/**
- * Framework version.
- */
-var version = pkg.version;
-
-// list command socket address
-var LIST_COMMAND_ADDRESS = 'http://127.0.0.1:9999';
+var args = process.argv.slice(2);
+var TIME_INIT = 1000;
 var TIME_KILL_WAIT = 6000;
-
-// Parse arguments
-var args = process.argv.slice(2)
-    , path = '.';
-
-// Get the name of Project
-var name = args[1];
-var name_path = name;
-if (name_path && name_path.indexOf('/')) {
-    var str = name_path.split('/');
-    name = str[str.length - 1];
-}
-var cwd = process.cwd();
-if (name === '.') {
-    var arr = cwd.split('/');
-    name = arr[arr.length - 1];
-}
-if (name === '..') {
-    var arr = cwd.split('/');
-    name = arr[arr.length - 2];
-}
+var TIME_STOP_WAIT = 10000;
+var LIST_COMMAND_ADDRESS = 'http://127.0.0.1:9999';
 
 /**
  * Usage documentation.
@@ -62,44 +37,61 @@ var usage = ''
         + '    [option]                  --debug=serverId:port'
     ;
 
-// Parse command
-var arg = args.shift();
-switch (arg) {
-    case 'help':
-        legalArgNum(0);
-        abort(usage);
-        break;
-    case 'version':
-        legalArgNum(0);
-        abort(version);
-        break;
-    case 'list':
-        legalArgNum(0);
-        list();
-        break;
-    case 'init':
-        legalArgNum(1);
-        path = args[0];
-        init();
-        break;
-    case 'start':
-        start();
-        break;
-    case 'stop':
-        legalArgNum(0);
-        terminal('stop');
-        break;
-    case 'kill':
-        legalArgNum(0);
-        terminal('kill');
-        break;
-    default:
-        abort("The command is error format.");
-        break;
-}
+/**
+ * Package information.
+ */
+var pkg = JSON.parse(fs.readFileSync(__dirname + '/../package.json'));
 
-// Init application
-function init() {
+/**
+ * Framework version.
+ */
+var version = pkg.version;
+
+/**
+ * Parse command arguments.
+ */
+(function(){
+    var arg = args.shift();
+    switch (arg) {
+        case 'help':
+            legalArgNum(0);
+            abort(usage);
+            break;
+        case 'version':
+            legalArgNum(0);
+            abort(version);
+            break;
+        case 'list':
+            legalArgNum(0);
+            list();
+            break;
+        case 'init':
+            legalArgNum(1);
+            init(args[0]);
+            break;
+        case 'start':
+            start();
+            break;
+        case 'stop':
+            legalArgNum(0);
+            terminal('stop');
+            break;
+        case 'kill':
+            legalArgNum(0);
+            terminal('kill');
+            break;
+        default:
+            abort("The command is error format.");
+            break;
+    }
+})();
+
+/**
+ * Init application at the given directory `path`.
+ *
+ * @param {String} path
+ */
+function init(path) {
     emptyDirectory(path, function (empty) {
         if (empty) {
             createApplicationAt(path);
@@ -117,11 +109,25 @@ function init() {
 }
 
 /**
- * Create application at the given directory `path`.
+ * Create directory and files at the given directory `path`.
  *
  * @param {String} path
  */
 function createApplicationAt(path) {
+    var name ='';
+    var cwd = process.cwd();
+    if (path.indexOf('/')) {
+        var str = path.split('/');
+        name = str[str.length - 1];
+    }
+    if (path === '.') {
+        var arr = cwd.split('/');
+        name = arr[arr.length - 1];
+    }
+    if (path === '..') {
+        var arr = cwd.split('/');
+        name = arr[arr.length - 2];
+    }
     copy(__dirname + '/../template/', path);
     mkdir(path + '/logs', 0);
     setTimeout(function () {
@@ -130,10 +136,13 @@ function createApplicationAt(path) {
             var str = fs.readFileSync(repalcefile[i]).toString();
             fs.writeFileSync(repalcefile[i], str.replace('$', name));
         }
-    }, 1000);
+    }, TIME_INIT);
 }
 
-// start the program
+/**
+ * Start application.
+ *
+ */
 function start() {
     //debug args
     var serverId = " ";
@@ -142,7 +151,7 @@ function start() {
         if (args[0] != 'production' && args[0] != 'development')
             if (!utils.startWith(args[0], '--debug='))
                 abort("The start command  arguments is error.");
-
+    //get debug args
     function parseServer(str) {
         if (str.indexOf(':') < 0 || str.indexOf(':') != str.lastIndexOf(':'))
             abort("The debug argument is error.");
@@ -156,6 +165,7 @@ function start() {
         if (lp < 1024 || lp > 65535)
             abort("The debug port is out of range.");
     }
+
     if (ph.existsSync('./app.js')) {
         if (ph.existsSync(process.cwd() + '/tmp')) {
             var ex = exec('ps -p ' + fs.readFileSync(process.cwd() + '/tmp'), function (error, stdout, stderr) {
@@ -205,20 +215,21 @@ function start() {
         });
     }
     else {
-        abort("Please go to your pomelo workspace to start the program");
+        abort("Please go to your pomelo workspace to start the program.");
     }
 }
 
-// list the servers of the program
+/**
+ * List pomelo processes.
+ *
+ */
 function list() {
     if (ph.existsSync('./tmp')) {
         fs.readFile('./tmp', function (err, data) {
             if (err) throw err;
-            process.kill(data, 'SIGINT');
-            var client = require('socket.io-client');
             var socket = client.connect(LIST_COMMAND_ADDRESS);
             socket.on('connect', function () {
-                socket.emit('message', Date.now());
+                socket.emit('list', Date.now());
                 socket.on('info', function (data) {
                     console.log(data.info);
                     process.exit(1);
@@ -227,11 +238,14 @@ function list() {
         });
     }
     else {
-        abort("There is no starting program");
+        abort("There is no starting program.");
     }
 }
 
-// stop or kill the program
+/**
+ * Terminal application.
+ *
+ */
 function terminal(signal) {
     if (ph.existsSync('./tmp')) {
         var ex = exec('ps -p ' + fs.readFileSync('./tmp'), function (error, stdout, stderr) {
@@ -240,22 +254,30 @@ function terminal(signal) {
                 abort("The program is stopped.");
             }
             else {
+                var socket = client.connect(LIST_COMMAND_ADDRESS);
                 fs.readFile('./tmp', function (err, data) {
                     if (err) throw err;
                     console.log("closing the program......\nplease wait......");
-                    if (signal === 'kill')
-                        process.kill(data, 'SIGHUP');
-                    else
-                        process.kill(data, 'SIGTERM');
+                    if (signal === 'kill') {
+                        socket.on('connect', function () {
+                            socket.emit('kill', Date.now());
+                        });
+                    }
+                    else {
+                        socket.on('connect', function () {
+                            socket.emit('stop', Date.now());
+                        });
+                    }
                     setTimeout(function () {
                         exec('kill -9 ' + data);
-                    }, TIME_KILL_WAIT);
+                        process.exit(1);
+                    }, TIME_STOP_WAIT);
                 });
             }
         });
     }
     else {
-        abort("There is no starting program");
+        abort("There is no starting program.");
     }
 }
 
@@ -387,6 +409,7 @@ function mkdir(url, mode, cb) {
             cb();
         }
     }
+
     arr.length && inner(arr.shift());
     console.log('   \x1b[36mmakedir\x1b[0m : ' + url);
 }
@@ -400,14 +423,17 @@ function mkdir(url, mode, cb) {
 function legalServerId(mode, serverId) {
     var flag = '';
     var str = fs.readFileSync(__dirname + "/../template/config/servers.json");
+
     function readJson(mode, data) {
         var jsonObj = JSON.parse(data);
         var servers = [];
+
         function pushServerId(arr) {
             for (var i = 0; i < arr.length; i++) {
                 servers.push(arr[i].id);
             }
         }
+
         if (mode === 'development') {
             var jo = jsonObj.development;
             pushServerId(jo.connector);
@@ -428,5 +454,6 @@ function legalServerId(mode, serverId) {
         }
         return false;
     }
+
     return readJson(mode, str);
 }
