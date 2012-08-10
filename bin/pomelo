@@ -3,7 +3,6 @@
 /**
  * Module dependencies.
  */
-
 var fs = require('fs')
     , os = require('os')
     , cp = require('child_process')
@@ -15,32 +14,18 @@ var fs = require('fs')
 /**
  * Package information.
  */
-
 var pkg = JSON.parse(fs.readFileSync(__dirname + '/../package.json'));
 
 /**
  * Framework version.
  */
-
 var version = pkg.version;
-
-/**
- * End-of-line code.
- */
-
-var eol = os.platform
-    ? ('win32' == os.platform() ? '\r\n' : '\n')
-    : '\n';
-
 
 // list command socket address
 var LIST_COMMAND_ADDRESS = 'http://127.0.0.1:9999';
-
 var TIME_KILL_WAIT = 6000;
 
-
 // Parse arguments
-
 var args = process.argv.slice(2)
     , path = '.';
 
@@ -56,12 +41,10 @@ if (name === '.') {
     var arr = cwd.split('/');
     name = arr[arr.length - 1];
 }
-
 if (name === '..') {
     var arr = cwd.split('/');
     name = arr[arr.length - 2];
 }
-
 
 /**
  * Usage documentation.
@@ -78,70 +61,6 @@ var usage = ''
         + '    help                      output help information\n'
         + '    [option]                  --debug=serverId:port'
     ;
-
-/**
- * package.json template.
- */
-
-var json = '{' + eol;
-json += '   "name" : "' + name + '",' + eol;
-json += '   "version" : "0.1.0",' + eol;
-json += '   "private" : false,' + eol;
-json += '  "dependencies": {' + eol;
-json += '   "express" : "2.5.2"' + eol;
-json += '    ,"connect" : ">=0.0.1"' + eol;
-json += '     ,"log4js" : ">=0.4.1"' + eol;
-json += '     , "socket.io" :  ">=0.9.4"' + eol;
-json += '     , "generic-pool" :  ">=1.0.9"' + eol;
-json += '     , "mysql" :  ">=0.9.5"' + eol;
-json += '     , "pomelo" :  ">=0.1.11"' + eol;
-json += '     , "socket.io-client" :  ">=0.9.4"' + eol;
-json += '     ,"underscore"  : ">=1.3.1"' + eol;
-json += '     ,"libxmljs"  :  ">=0.0.1"' + eol;
-json += '     ,"async" : ">=0.0.1"' + eol;
-json += '      ,"aoi-service" : ">=0.2.0"' + eol;
-json += '     ,"crc" : ">=0.0.1"' + eol;
-json += ' },' + eol;
-json += ' "devDependencies" : {' + eol;
-json += '  "flow" : ">=0.2.2"' + eol;
-json += '  , "should" : ">=0.0.1"' + eol;
-json += '  , "mocha" : ">=0.0.1"' + eol;
-json += '} ';
-json += '}' + eol;
-
-
-/**
- * App template.
- */
-var app = [
-    ''
-    , '/**'
-    , ' * Module dependencies.'
-    , ' */'
-    , 'var pomelo = require(\'pomelo\')'
-    , ''
-    , 'var appTemplate = pomelo.appTemplate;'
-    , 'var app = appTemplate.init();'
-    , ''
-    , '// Configuration'
-    , '  app.set(\'name\', \'' + name + '\');'
-    , '  app.set(\'dirname\', __dirname);'
-    , '  appTemplate.defaultConfig(app);'
-    , ''
-    , '// Start'
-    , 'app.start();'
-    , ''
-    , 'function startWebServer(){'
-    , ' var app_express = require(\'./app_express\');'
-    , ' console.log(\'[AppWebServerStart] listen, visit http://0.0.0.0:3001/index.html\');'
-    , '}'
-    , ''
-    , 'if(app.serverType===\'master\'){'
-    , ' startWebServer();'
-    , '}'
-    , ''
-].join(eol);
-
 
 // Parse command
 var arg = args.shift();
@@ -179,7 +98,6 @@ switch (arg) {
         break;
 }
 
-
 // Init application
 function init() {
     emptyDirectory(path, function (empty) {
@@ -206,17 +124,20 @@ function init() {
 function createApplicationAt(path) {
     copy(__dirname + '/../template/', path);
     mkdir(path + '/logs', 0);
-    write(path + '/app.js', app);
-    write(path + '/package.json', json);
+    setTimeout(function () {
+        var repalcefile = [path + '/app.js', path + '/package.json'];
+        for (var i = 0; i < repalcefile.length; i++) {
+            var str = fs.readFileSync(repalcefile[i]).toString();
+            fs.writeFileSync(repalcefile[i], str.replace('$', name));
+        }
+    }, 1000);
 }
-
 
 // start the program
 function start() {
     //debug args
     var serverId = " ";
     var port = " ";
-
     if (args.length != 0)
         if (args[0] != 'production' && args[0] != 'development')
             if (!utils.startWith(args[0], '--debug='))
@@ -235,7 +156,6 @@ function start() {
         if (lp < 1024 || lp > 65535)
             abort("The debug port is out of range.");
     }
-
     if (ph.existsSync('./app.js')) {
         if (ph.existsSync(process.cwd() + '/tmp')) {
             var ex = exec('ps -p ' + fs.readFileSync(process.cwd() + '/tmp'), function (error, stdout, stderr) {
@@ -244,7 +164,6 @@ function start() {
                 }
             });
         }
-
         var ls;
         switch (args.length) {
             case 0:
@@ -312,7 +231,6 @@ function list() {
     }
 }
 
-
 // stop or kill the program
 function terminal(signal) {
     if (ph.existsSync('./tmp')) {
@@ -356,18 +274,6 @@ function emptyDirectory(path, fn) {
 }
 
 /**
- * echo str > path.
- *
- * @param {String} path
- * @param {String} str
- */
-
-function write(path, str) {
-    fs.writeFile(path, str);
-    console.log('   \x1b[36mcreatefile\x1b[0m : ' + path);
-}
-
-/**
  * Prompt confirmation with the given `msg`.
  *
  * @param {String} msg
@@ -394,7 +300,6 @@ function prompt(msg, fn) {
     } else {
         console.log(msg);
     }
-
     // stdin
     process.stdin.setEncoding('ascii');
     process.stdin.once('data',function (data) {
@@ -425,7 +330,6 @@ function legalArgNum(argNum) {
     }
 }
 
-
 /**
  * @param {String} origin
  * @param {String} target
@@ -434,24 +338,19 @@ function copy(origin, target) {
     if (!ph.existsSync(origin)) {
         console.log(origin + 'is not exist......');
     }
-
     if (!ph.existsSync(target)) {
         mkdir(target, 0);
         console.log('   \x1b[36mmakedir\x1b[0m : ' + target);
     }
-
     fs.readdir(origin, function (err, datalist) {
         if (err) return;
-
         for (var i = 0; i < datalist.length; i++) {
             var oCurrent = origin + '/' + datalist[i];
             var tCurrent = target + '/' + datalist[i];
-
             if (fs.statSync(oCurrent).isFile()) {
                 fs.writeFileSync(tCurrent, fs.readFileSync(oCurrent, ''), '');
                 console.log('   \x1b[36mcreatefile\x1b[0m : ' + oCurrent);
             }
-
             else if (fs.statSync(oCurrent).isDirectory()) {
                 copy(oCurrent, tCurrent);
             }
@@ -488,7 +387,6 @@ function mkdir(url, mode, cb) {
             cb();
         }
     }
-
     arr.length && inner(arr.shift());
     console.log('   \x1b[36mmakedir\x1b[0m : ' + url);
 }
@@ -502,17 +400,14 @@ function mkdir(url, mode, cb) {
 function legalServerId(mode, serverId) {
     var flag = '';
     var str = fs.readFileSync(__dirname + "/../template/config/servers.json");
-
     function readJson(mode, data) {
         var jsonObj = JSON.parse(data);
         var servers = [];
-
         function pushServerId(arr) {
             for (var i = 0; i < arr.length; i++) {
                 servers.push(arr[i].id);
             }
         }
-
         if (mode === 'development') {
             var jo = jsonObj.development;
             pushServerId(jo.connector);
@@ -533,6 +428,5 @@ function legalServerId(mode, serverId) {
         }
         return false;
     }
-
     return readJson(mode, str);
 }
