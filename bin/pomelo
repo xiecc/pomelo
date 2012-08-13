@@ -144,8 +144,7 @@ function createApplicationAt(path) {
  *
  */
 function start() {
-    if(args.length >1 ||(args.length ==1 && (args[0] !== 'development' && args[0] !== 'production')))
-    {
+    if (args.length > 1 || (args.length == 1 && (args[0] !== 'development' && args[0] !== 'production'))) {
         abort("The argument is error.");
     }
     if (ph.existsSync('./app.js')) {
@@ -156,7 +155,7 @@ function start() {
                 }
             });
         }
-        var ls = spawn('node', ['app.js','env',args.length===0?'development':args[0]]);
+        var ls = spawn('node', ['app.js', 'env', args.length === 0 ? 'development' : args[0]]);
 
         //reserve the child process pid
         fs.writeFile(process.cwd() + '/tmp', ls.pid);
@@ -370,6 +369,7 @@ function mkdir(url, mode, cb) {
             cb();
         }
     }
+
     arr.length && inner(arr.shift());
     console.log('   \x1b[36mmakedir\x1b[0m : ' + url);
 }
