@@ -154,16 +154,16 @@ function start() {
     for (var i = 0; i < params.length; i++) {
         for (var key in params[i]) {
             var param = params[i][key];
-            var arr = param.split(',');
+            var arr = param.split(' ');
             for (var j = 0; j < arr.length; j++) {
-                if (arr[j] !== 'gc' && arr[j] !== 'prof' && arr[j] !== 'trace' && !utils.startWith(arr[j], 'debug:'))
+                if (arr[j] !== '--gc' && arr[j] !== '--prof' && arr[j] !== '--trace' && !utils.startWith(arr[j], '--debug'))
                     abort("The argument is error in file:servers.json.");
                 if(arr[j].indexOf(':')>0){
                     checkPort(arr[j].split(':')[1]);
-                    if(map['debugPorts'] === undefined){
-                        map['debugPorts'] = [];
+                    if(map['--debugPorts'] === undefined){
+                        map['--debugPorts'] = [];
                     }
-                    map['debugPorts'].push(arr[j].split(':')[1]);
+                    map['--debugPorts'].push(arr[j].split(':')[1]);
                     arr[j]=arr[j].split(':')[0];
                 }
                 if(map[arr[j]] === undefined)
@@ -197,17 +197,19 @@ function start() {
         args.length===0?child_params.push('development'):child_params.push(args[0]);
 
         for(var key in map){
-              child_params.push(key);
-               var str = '';
-                for(var k =0; k<map[key].length ; k++){
-                    if(k != map[key].length-1)
-                      str +=map[key][k]+',';
-                    else{
-                      str += map[key][k];
-                    }
+            child_params.push(key);
+            var str = '';
+            for(var k =0; k<map[key].length ; k++){
+                if(k != map[key].length-1)
+                    str +=map[key][k]+',';
+                else{
+                    str += map[key][k];
                 }
-                child_params.push(str);
+            }
+            child_params.push(str);
         }
+        console.log(child_params);
+
         var ls = spawn('node', child_params);
 
         //reserve the child process pid
@@ -285,7 +287,6 @@ function terminal(signal) {
                             process.exit(1);
                         }, TIME_STOP_WAIT);
                     }
-
                 });
             }
         });
@@ -423,7 +424,6 @@ function mkdir(url, mode, cb) {
             cb();
         }
     }
-
     arr.length && inner(arr.shift());
     console.log('   \x1b[36mmakedir\x1b[0m : ' + url);
 }
@@ -440,8 +440,8 @@ function getParams(mode) {
     for (var key in val) {
         for (var i = 0; i < val[key].length; i++) {
             var map = {};
-            if (val[key][i].params !== undefined) {
-                map[val[key][i].id] = val[key][i].params;
+            if (val[key][i].args !== undefined) {
+                map[val[key][i].id] = val[key][i].args;
                 rs.push(map);
             }
         }
