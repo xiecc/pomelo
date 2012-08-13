@@ -3,65 +3,23 @@
 /**
  * Module dependencies.
  */
-
 var fs = require('fs')
     , os = require('os')
     , cp = require('child_process')
+    , client = require('socket.io-client')
     , utils = require('../lib/util/utils')
     , ph = require('path')
     , exec = cp.exec
     , spawn = cp.spawn;
 
 /**
- * Package information.
+ *  Common Variables
  */
-
-var pkg = JSON.parse(fs.readFileSync(__dirname + '/../package.json'));
-
-/**
- * Framework version.
- */
-
-var version = pkg.version;
-
-/**
- * End-of-line code.
- */
-
-var eol = os.platform
-    ? ('win32' == os.platform() ? '\r\n' : '\n')
-    : '\n';
-
-
-// list command socket address
-var LIST_COMMAND_ADDRESS = 'http://127.0.0.1:9999';
-
+var args = process.argv.slice(2);
+var TIME_INIT = 1000;
 var TIME_KILL_WAIT = 6000;
-
-
-// Parse arguments
-
-var args = process.argv.slice(2)
-    , path = '.';
-
-// Get the name of Project
-var name = args[1];
-var name_path = name;
-if (name_path && name_path.indexOf('/')) {
-    var str = name_path.split('/');
-    name = str[str.length - 1];
-}
-var cwd = process.cwd();
-if (name === '.') {
-    var arr = cwd.split('/');
-    name = arr[arr.length - 1];
-}
-
-if (name === '..') {
-    var arr = cwd.split('/');
-    name = arr[arr.length - 2];
-}
-
+var TIME_STOP_WAIT = 10000;
+var LIST_COMMAND_ADDRESS = 'http://127.0.0.1:3005';
 
 /**
  * Usage documentation.
@@ -80,108 +38,60 @@ var usage = ''
     ;
 
 /**
- * package.json template.
+ * Package information.
  */
-
-var json = '{' + eol;
-json += '   "name" : "' + name + '",' + eol;
-json += '   "version" : "0.1.0",' + eol;
-json += '   "private" : false,' + eol;
-json += '  "dependencies": {' + eol;
-json += '   "express" : "2.5.2"' + eol;
-json += '    ,"connect" : ">=0.0.1"' + eol;
-json += '     ,"log4js" : ">=0.4.1"' + eol;
-json += '     , "socket.io" :  ">=0.9.4"' + eol;
-json += '     , "generic-pool" :  ">=1.0.9"' + eol;
-json += '     , "mysql" :  ">=0.9.5"' + eol;
-json += '     , "pomelo" :  ">=0.1.11"' + eol;
-json += '     , "socket.io-client" :  ">=0.9.4"' + eol;
-json += '     ,"underscore"  : ">=1.3.1"' + eol;
-json += '     ,"libxmljs"  :  ">=0.0.1"' + eol;
-json += '     ,"async" : ">=0.0.1"' + eol;
-json += '      ,"aoi-service" : ">=0.2.0"' + eol;
-json += '     ,"crc" : ">=0.0.1"' + eol;
-json += ' },' + eol;
-json += ' "devDependencies" : {' + eol;
-json += '  "flow" : ">=0.2.2"' + eol;
-json += '  , "should" : ">=0.0.1"' + eol;
-json += '  , "mocha" : ">=0.0.1"' + eol;
-json += '} ';
-json += '}' + eol;
-
+var pkg = JSON.parse(fs.readFileSync(__dirname + '/../package.json'));
 
 /**
- * App template.
+ * Framework version.
  */
-var app = [
-    ''
-    , '/**'
-    , ' * Module dependencies.'
-    , ' */'
-    , 'var pomelo = require(\'pomelo\')'
-    , ''
-    , 'var appTemplate = pomelo.appTemplate;'
-    , 'var app = appTemplate.init();'
-    , ''
-    , '// Configuration'
-    , '  app.set(\'name\', \'' + name + '\');'
-    , '  app.set(\'dirname\', __dirname);'
-    , '  appTemplate.defaultConfig(app);'
-    , ''
-    , '// Start'
-    , 'app.start();'
-    , ''
-    , 'function startWebServer(){'
-    , ' var app_express = require(\'./app_express\');'
-    , ' console.log(\'[AppWebServerStart] listen, visit http://0.0.0.0:3001/index.html\');'
-    , '}'
-    , ''
-    , 'if(app.serverType===\'master\'){'
-    , ' startWebServer();'
-    , '}'
-    , ''
-].join(eol);
+var version = pkg.version;
 
+/**
+ * Parse command arguments.
+ */
+(function () {
+    var arg = args.shift();
+    switch (arg) {
+        case 'help':
+            legalArgNum(0);
+            abort(usage);
+            break;
+        case 'version':
+            legalArgNum(0);
+            abort(version);
+            break;
+        case 'list':
+            legalArgNum(0);
+            list();
+            break;
+        case 'init':
+            legalArgNum(1);
+            init(args[0]);
+            break;
+        case 'start':
+            start();
+            break;
+        case 'stop':
+            legalArgNum(0);
+            terminal('stop');
+            break;
+        case 'kill':
+            legalArgNum(0);
+            terminal('kill');
+            break;
+        default:
+            abort("The command is error format.");
+            break;
+    }
+})();
 
-// Parse command
-var arg = args.shift();
-switch (arg) {
-    case 'help':
-        legalArgNum(0);
-        abort(usage);
-        break;
-    case 'version':
-        legalArgNum(0);
-        abort(version);
-        break;
-    case 'list':
-        legalArgNum(0);
-        list();
-        break;
-    case 'init':
-        legalArgNum(1);
-        path = args[0];
-        init();
-        break;
-    case 'start':
-        start();
-        break;
-    case 'stop':
-        legalArgNum(0);
-        terminal('stop');
-        break;
-    case 'kill':
-        legalArgNum(0);
-        terminal('kill');
-        break;
-    default:
-        abort("The command is error format.");
-        break;
-}
-
-
-// Init application
-function init() {
+/**
+ * Init application at the given directory `path`.
+ *
+ * @param {String} path
+ */
+function init(path) {
     emptyDirectory(path, function (empty) {
         if (empty) {
             createApplicationAt(path);
@@ -199,35 +109,70 @@ function init() {
 }
 
 /**
- * Create application at the given directory `path`.
+ * Create directory and files at the given directory `path`.
  *
  * @param {String} path
  */
 function createApplicationAt(path) {
-    // copy(__dirname + '/../template/', path);
+    var name = '';
+    var cwd = process.cwd();
+    if (path.indexOf('/')) {
+        var str = path.split('/');
+        name = str[str.length - 1];
+    }
+    if (path === '.') {
+        var arr = cwd.split('/');
+        name = arr[arr.length - 1];
+    }
+    if (path === '..') {
+        var arr = cwd.split('/');
+        name = arr[arr.length - 2];
+    }
+    copy(__dirname + '/../template/', path);
     mkdir(path + '/logs', 0);
-    write(path + '/app.js', app);
-    write(path + '/package.json', json);
+    setTimeout(function () {
+        var repalcefile = [path + '/app.js', path + '/package.json'];
+        for (var i = 0; i < repalcefile.length; i++) {
+            var str = fs.readFileSync(repalcefile[i]).toString();
+            fs.writeFileSync(repalcefile[i], str.replace('$', name));
+        }
+    }, TIME_INIT);
 }
 
-
-// start the program
+/**
+ * Start application.
+ *
+ */
 function start() {
-    //debug args
-    var serverId = " ";
-    var port = " ";
-
-    if (args.length != 0)
-        if (args[0] != 'production' && args[0] != 'development')
-            if (!utils.startWith(args[0], '--debug='))
-                abort("The start command  arguments is error.");
-
-    function parseServer(str) {
-        if (str.indexOf(':') < 0 || str.indexOf(':') != str.lastIndexOf(':'))
-            abort("The debug argument is error.");
-        var str = str.substr(8, str.length - 8);
-        serverId = str.split(':')[0];
-        port = str.split(':')[1];
+    if(args.length >1 ||(args.length ==1 && (args[0] !== 'development' && args[0] !== 'production')))
+    {
+        abort("The argument is error.");
+    }
+    var map = {};
+    var mode = args.length === 0 ? 'development' : args[0];
+    var params = getParams(mode);
+    for (var i = 0; i < params.length; i++) {
+        for (var key in params[i]) {
+            var param = params[i][key];
+            var arr = param.split(',');
+            for (var j = 0; j < arr.length; j++) {
+                if (arr[j] !== 'gc' && arr[j] !== 'prof' && arr[j] !== 'trace' && !utils.startWith(arr[j], 'debug:'))
+                    abort("The argument is error in file:servers.json.");
+                if(arr[j].indexOf(':')>0){
+                    checkPort(arr[j].split(':')[1]);
+                    if(map['debugPorts'] === undefined){
+                        map['debugPorts'] = [];
+                    }
+                    map['debugPorts'].push(arr[j].split(':')[1]);
+                    arr[j]=arr[j].split(':')[0];
+                }
+                if(map[arr[j]] === undefined)
+                    map[arr[j]] = [];
+                map[arr[j]].push(key);
+            }
+        }
+    }
+    function checkPort(port) {
         var re = /^[1-9]+[0-9]*]*$/;
         if (!re.test(port))
             abort("The debug port is not Number.");
@@ -245,33 +190,26 @@ function start() {
             });
         }
 
-        var ls;
-        switch (args.length) {
-            case 0:
-                ls = spawn('node', ['app.js']);
-                break;
-            case 1:
-                if (args[0] === 'development' || args[0] === 'production') {
-                    ls = spawn('node', ['app.js', 'env', args[0]]);
-                }
-                else {
-                    parseServer(args[0]);
-                    if (legalServerId(args[0], serverId) === false) {
-                        abort("The serverId does not exist.");
+        var child_params = [];
+        child_params.push('app.js');
+        child_params.push('env');
+
+        args.length===0?child_params.push('development'):child_params.push(args[0]);
+
+        for(var key in map){
+              child_params.push(key);
+               var str = '';
+                for(var k =0; k<map[key].length ; k++){
+                    if(k != map[key].length-1)
+                      str +=map[key][k]+',';
+                    else{
+                      str += map[key][k];
                     }
-                    ls = spawn('node', ['app.js', 'env', 'development', 'serverType', 'master', 'serverId'  , 'master-server-1', 'debugServerId', serverId, 'debugPort', port]);
                 }
-                break;
-            case 2:
-                parseServer(args[1]);
-                if (legalServerId(args[0], serverId) === false) {
-                    abort("The serverId does not exist.");
-                }
-                ls = spawn('node', ['app.js', 'env', args[0], 'serverType', 'master', 'serverId'  , 'master-server-1', 'debugServerId', serverId, 'debugPort', port]);
-                break;
-            default:
-                abort("The start command  arguments is error.");
+                child_params.push(str);
         }
+        var ls = spawn('node', child_params);
+
         //reserve the child process pid
         fs.writeFile(process.cwd() + '/tmp', ls.pid);
 
@@ -286,20 +224,21 @@ function start() {
         });
     }
     else {
-        abort("Please go to your pomelo workspace to start the program");
+        abort("Please go to your pomelo workspace to start the program.");
     }
 }
 
-// list the servers of the program
+/**
+ * List pomelo processes.
+ *
+ */
 function list() {
     if (ph.existsSync('./tmp')) {
         fs.readFile('./tmp', function (err, data) {
             if (err) throw err;
-            process.kill(data, 'SIGINT');
-            var client = require('socket.io-client');
             var socket = client.connect(LIST_COMMAND_ADDRESS);
             socket.on('connect', function () {
-                socket.emit('message', Date.now());
+                socket.emit('list', Date.now());
                 socket.on('info', function (data) {
                     console.log(data.info);
                     process.exit(1);
@@ -308,12 +247,14 @@ function list() {
         });
     }
     else {
-        abort("There is no starting program");
+        abort("There is no starting program.");
     }
 }
 
-
-// stop or kill the program
+/**
+ * Terminal application.
+ *
+ */
 function terminal(signal) {
     if (ph.existsSync('./tmp')) {
         var ex = exec('ps -p ' + fs.readFileSync('./tmp'), function (error, stdout, stderr) {
@@ -322,22 +263,35 @@ function terminal(signal) {
                 abort("The program is stopped.");
             }
             else {
+                var socket = client.connect(LIST_COMMAND_ADDRESS);
                 fs.readFile('./tmp', function (err, data) {
                     if (err) throw err;
                     console.log("closing the program......\nplease wait......");
-                    if (signal === 'kill')
-                        process.kill(data, 'SIGHUP');
-                    else
-                        process.kill(data, 'SIGTERM');
-                    setTimeout(function () {
-                        exec('kill -9 ' + data);
-                    }, TIME_KILL_WAIT);
+                    if (signal === 'kill') {
+                        socket.on('connect', function () {
+                            socket.emit('kill', Date.now());
+                        });
+                        setTimeout(function () {
+                            exec('kill -9 ' + data);
+                            process.exit(1);
+                        }, TIME_KILL_WAIT);
+                    }
+                    else {
+                        socket.on('connect', function () {
+                            socket.emit('stop', Date.now());
+                        });
+                        setTimeout(function () {
+                            exec('kill -9 ' + data);
+                            process.exit(1);
+                        }, TIME_STOP_WAIT);
+                    }
+
                 });
             }
         });
     }
     else {
-        abort("There is no starting program");
+        abort("There is no starting program.");
     }
 }
 
@@ -353,18 +307,6 @@ function emptyDirectory(path, fn) {
         if (err && 'ENOENT' != err.code) throw err;
         fn(!files || !files.length);
     });
-}
-
-/**
- * echo str > path.
- *
- * @param {String} path
- * @param {String} str
- */
-
-function write(path, str) {
-    fs.writeFile(path, str);
-    console.log('   \x1b[36mcreatefile\x1b[0m : ' + path);
 }
 
 /**
@@ -394,7 +336,6 @@ function prompt(msg, fn) {
     } else {
         console.log(msg);
     }
-
     // stdin
     process.stdin.setEncoding('ascii');
     process.stdin.once('data',function (data) {
@@ -425,7 +366,6 @@ function legalArgNum(argNum) {
     }
 }
 
-
 /**
  * @param {String} origin
  * @param {String} target
@@ -434,24 +374,19 @@ function copy(origin, target) {
     if (!ph.existsSync(origin)) {
         console.log(origin + 'is not exist......');
     }
-
     if (!ph.existsSync(target)) {
         mkdir(target, 0);
         console.log('   \x1b[36mmakedir\x1b[0m : ' + target);
     }
-
     fs.readdir(origin, function (err, datalist) {
         if (err) return;
-
         for (var i = 0; i < datalist.length; i++) {
             var oCurrent = origin + '/' + datalist[i];
             var tCurrent = target + '/' + datalist[i];
-
             if (fs.statSync(oCurrent).isFile()) {
                 fs.writeFileSync(tCurrent, fs.readFileSync(oCurrent, ''), '');
                 console.log('   \x1b[36mcreatefile\x1b[0m : ' + oCurrent);
             }
-
             else if (fs.statSync(oCurrent).isDirectory()) {
                 copy(oCurrent, tCurrent);
             }
@@ -494,45 +429,22 @@ function mkdir(url, mode, cb) {
 }
 
 /**
- * Judge whether the serverId is legal.
+ * Get process params.
  *
- * @param {String} mode
- * @param {String} serverId
  */
-function legalServerId(mode, serverId) {
-    var flag = '';
-    var str = fs.readFileSync(__dirname + "/../template/config/servers.json");
-
-    function readJson(mode, data) {
-        var jsonObj = JSON.parse(data);
-        var servers = [];
-
-        function pushServerId(arr) {
-            for (var i = 0; i < arr.length; i++) {
-                servers.push(arr[i].id);
+function getParams(mode) {
+    var rs = [];
+    var keys = [];
+    var val = require(process.cwd() + "/config/servers.json");
+    val = val[mode];
+    for (var key in val) {
+        for (var i = 0; i < val[key].length; i++) {
+            var map = {};
+            if (val[key][i].params !== undefined) {
+                map[val[key][i].id] = val[key][i].params;
+                rs.push(map);
             }
         }
-
-        if (mode === 'development') {
-            var jo = jsonObj.development;
-            pushServerId(jo.connector);
-            pushServerId(jo.area);
-            pushServerId(jo.status);
-            pushServerId(jo.channel);
-        }
-        else {
-            var jo = jsonObj.production;
-            pushServerId(jo.connector);
-            pushServerId(jo.area);
-            pushServerId(jo.status);
-        }
-        for (var j = 0; j < servers.length; j++) {
-            if (servers[j] === serverId) {
-                return true;
-            }
-        }
-        return false;
     }
-
-    return readJson(mode, str);
+    return rs;
 }

@@ -1,6 +1,6 @@
 {
-    "name":"pomelo",
-    "version":"0.1.26",
+    "name":"$",
+    "version":"0.0.1",
     "private":false,
     "dependencies":{
         "express":"2.5.2",
@@ -19,7 +19,7 @@
         "socket.io-client":">=0.9.4",
         "crc":">=0.0.1",
         "pomelo-loader":">=0.0.1",
-        "pomelo-rpc":">=0.0.2",
+        "pomelo-rpc":">=0.0.1",
         "pomelo-protocol":">=0.0.2",
         "debug":">=0.7.0"
     },
