@@ -228,7 +228,6 @@ function terminal(signal) {
                             socket.emit('stop', Date.now());
                         });
                         setTimeout(function () {
-                            exec('kill -9 ' + data);
                             process.exit(1);
                         }, TIME_STOP_WAIT);
                     }
