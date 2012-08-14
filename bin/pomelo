@@ -144,43 +144,9 @@ function createApplicationAt(path) {
  *
  */
 function start() {
-    if(args.length >1 ||(args.length ==1 && (args[0] !== 'development' && args[0] !== 'production')))
-    {
+    if (args.length > 1 || (args.length == 1 && (args[0] !== 'development' && args[0] !== 'production'))) {
         abort("The argument is error.");
     }
-    var map = {};
-    var mode = args.length === 0 ? 'development' : args[0];
-    var params = getParams(mode);
-    for (var i = 0; i < params.length; i++) {
-        for (var key in params[i]) {
-            var param = params[i][key];
-            var arr = param.split(',');
-            for (var j = 0; j < arr.length; j++) {
-                if (arr[j] !== 'gc' && arr[j] !== 'prof' && arr[j] !== 'trace' && !utils.startWith(arr[j], 'debug:'))
-                    abort("The argument is error in file:servers.json.");
-                if(arr[j].indexOf(':')>0){
-                    checkPort(arr[j].split(':')[1]);
-                    if(map['debugPorts'] === undefined){
-                        map['debugPorts'] = [];
-                    }
-                    map['debugPorts'].push(arr[j].split(':')[1]);
-                    arr[j]=arr[j].split(':')[0];
-                }
-                if(map[arr[j]] === undefined)
-                    map[arr[j]] = [];
-                map[arr[j]].push(key);
-            }
-        }
-    }
-    function checkPort(port) {
-        var re = /^[1-9]+[0-9]*]*$/;
-        if (!re.test(port))
-            abort("The debug port is not Number.");
-        var lp = Number(port);
-        if (lp < 1024 || lp > 65535)
-            abort("The debug port is out of range.");
-    }
-
     if (ph.existsSync('./app.js')) {
         if (ph.existsSync(process.cwd() + '/tmp')) {
             var ex = exec('ps -p ' + fs.readFileSync(process.cwd() + '/tmp'), function (error, stdout, stderr) {
@@ -189,26 +155,7 @@ function start() {
                 }
             });
         }
-
-        var child_params = [];
-        child_params.push('app.js');
-        child_params.push('env');
-
-        args.length===0?child_params.push('development'):child_params.push(args[0]);
-
-        for(var key in map){
-              child_params.push(key);
-               var str = '';
-                for(var k =0; k<map[key].length ; k++){
-                    if(k != map[key].length-1)
-                      str +=map[key][k]+',';
-                    else{
-                      str += map[key][k];
-                    }
-                }
-                child_params.push(str);
-        }
-        var ls = spawn('node', child_params);
+        var ls = spawn('node', ['app.js', 'env', args.length === 0 ? 'development' : args[0]]);
 
         //reserve the child process pid
         fs.writeFile(process.cwd() + '/tmp', ls.pid);
@@ -285,7 +232,6 @@ function terminal(signal) {
                             process.exit(1);
                         }, TIME_STOP_WAIT);
                     }
-
                 });
             }
         });
@@ -426,25 +372,4 @@ function mkdir(url, mode, cb) {
 
     arr.length && inner(arr.shift());
     console.log('   \x1b[36mmakedir\x1b[0m : ' + url);
-}
-
-/**
- * Get process params.
- *
- */
-function getParams(mode) {
-    var rs = [];
-    var keys = [];
-    var val = require(process.cwd() + "/config/servers.json");
-    val = val[mode];
-    for (var key in val) {
-        for (var i = 0; i < val[key].length; i++) {
-            var map = {};
-            if (val[key][i].params !== undefined) {
-                map[val[key][i].id] = val[key][i].params;
-                rs.push(map);
-            }
-        }
-    }
-    return rs;
 }
