@@ -6,7 +6,7 @@ Ext.onReady(function(){
 	id:'sceneStoreId',
 	autoLoad:false,
 	pageSize:5,
-    fields:['sceneId','name','roleId','uid','position','serverId','username'],
+    fields:['name','kindName','position','serverId'],
     proxy: {
         type: 'memory',
         reader: {
@@ -25,11 +25,8 @@ var sceneGrid=Ext.create('Ext.grid.Panel', {
     columns:[
 		{xtype:'rownumberer',width:50,sortable:false},
 		{text:'serverId',width:120,dataIndex:'serverId'},
-		{text:'sceneId',width:100,dataIndex:'sceneId'},
-		{text:'uid',dataIndex:'uid',width:100},
-		{text:'username',dataIndex:'username',width:100},
 		{text:'name',dataIndex:'name',width:100},
-		{text:'roleId',dataIndex:'roleId',width:100},
+		{text:'kindName',dataIndex:'kindName',width:100},
 		{text:'position',dataIndex:'position',width:400}
 		],
 	 tbar:[{
