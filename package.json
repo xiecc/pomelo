@@ -1,6 +1,6 @@
 {
     "name":"pomelo",
-    "version":"0.1.28",
+    "version":"0.1.32",
     "private":false,
     "dependencies":{
         "express":"2.5.2",
@@ -9,7 +9,7 @@
         "pomelo-schedule":">=0.3.3",
         "pomelo-monitor":">=0.1.2",
         "aoi-service":"=0.1.2",
-        "data-sync":">=0.0.10",
+        "data-sync":">=0.0.11",
         "v8-profiler":">=3.6.2-1",
         "generic-pool":">=1.0.9",
         "ws":">=0.4.10",
@@ -19,7 +19,7 @@
         "socket.io-client":">=0.9.4",
         "crc":">=0.0.1",
         "pomelo-loader":">=0.0.1",
-        "pomelo-rpc":">=0.0.2",
+        "pomelo-rpc":">=0.0.4",
         "pomelo-protocol":">=0.0.2",
         "debug":">=0.7.0"
     },
