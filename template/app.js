@@ -1,17 +1,23 @@
-/**
- * Module dependencies.
- */
-var pomelo = require('pomelo')
-
+var pomelo = require('pomelo');
 var appTemplate = pomelo.appTemplate;
-var app = appTemplate.init();
 
-// Configuration
+var RPC_FLUSH_INTERVAL = 30;
+
+var app = appTemplate.init();
 app.set('name', '$');
 app.set('dirname', __dirname);
 appTemplate.defaultConfig(app);
 
-// Start
+
+app.configure('production|development', function () {
+    if (app.serverType !== 'master') {
+        app.load(pomelo.remote, {cacheMsg:true, interval:RPC_FLUSH_INTERVAL});
+    }
+});
+
+
+appTemplate.done(app);
+
 app.start();
 
 function startWebServer() {
@@ -21,4 +27,10 @@ function startWebServer() {
 
 if (app.serverType === 'master') {
     startWebServer();
+    app.startConsole();
 }
+
+
+process.on('uncaughtException', function (err) {
+    console.error(' Caught exception: ' + err.stack);
+});
