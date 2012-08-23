@@ -347,6 +347,7 @@ function copy(origin, target) {
  * @param {Function} cb
  */
 function mkdir(url, mode, cb) {
+
     var path = require("path"), arr = url.split("/");
     mode = mode || 0755;
     cb = cb || function () {
@@ -357,6 +358,10 @@ function mkdir(url, mode, cb) {
     if (arr[0] == "..") {
         arr.splice(0, 2, arr[0] + "/" + arr[1]);
     }
+    if(arr[0] == ""){
+          arr[0] = "/";
+    }
+
     function inner(cur) {
         if (!path.existsSync(cur)) {
             fs.mkdirSync(cur, mode);

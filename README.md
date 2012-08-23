@@ -1,13 +1,24 @@
 ## pomelo
 
 Fast, scalable game server framework for  [node](http://nodejs.org).
-Pomelo provides a full stack of game server development infrastructure, including framework, libraries and tools.
+Pomelo provides a full stack of game(especially MMO) server development infrastructure, including framework, libraries and tools.
 
 ## Viewing demos
 
  * Visit the [online demo game](http://nodejs.netease.com/lordofpomelo)
  * or you can visit [demo game github](http://github.com/node-pomelo/lordofpomelo)to get the source code and install it on your local machine.
 
+## Features
+
+  * Built on [socket.io] (https://github.com/LearnBoost/socket.io.git)
+  * Scalable multi-process architecture, area based partition
+  * Easy to scale and extend servers, almost zero config for adding new type of servers
+  * Easy client server communication, zero config for client server request and response with websocket
+  * Easy channel management and api for broadcasting, multicasting
+  * Simple rpc framework for communication between multiple servers, zero config
+  * Focus on scalability and high performance,  proved handling more than 2000 online users each area, with real world MMO logic, each request less than 200ms.
+  * Full stack of libraries for MMO game development, including ai, aoi(area of interest), scheduler, data-sync, etc.
+  * Admin console for managing servers, online users and performance profiler etc.
 
 ## Installation
   $ npm install -g pomelo
@@ -29,17 +40,6 @@ The quickest way to get started with pomelo is to utilize the executable `pomelo
 
   $ node app
 
-## Features
-
-  * Built on [socket.io] (https://github.com/LearnBoost/socket.io.git)
-  * Scalable multi-process architecture, area based partition
-  * Easy to scale and extend servers, almost zero config for adding new type of servers
-  * Easy client server communication, zero config for client server request and response with websocket
-  * Easy channel management and api for broadcasting, multicasting
-  * Simple rpc framework for communication between multiple servers, zero config
-  * Focus on scalability and high performance,  proved handling more than 2000 online users each area, with real world MMO logic, each request less than 200ms.
-  * Full stack of libraries for MMO game development, including ai, aoi(area of interested), scheduler, data-sync, etc.
-  * Admin console for managing servers, online users and performance profile etc.
 
 ## More Information
   * go to [main site](http://nodejs.netease.com/pomelo) for more information
