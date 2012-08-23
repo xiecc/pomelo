@@ -9,7 +9,7 @@
         "pomelo-schedule":">=0.3.3",
         "pomelo-monitor":">=0.2.6",
         "aoi-service":"=0.1.2",
-        "data-sync":">=0.0.11",
+        "data-sync":">=0.0.12",
         "v8-profiler":">=3.6.2-1",
         "generic-pool":">=1.0.9",
         "ws":">=0.4.10",
@@ -20,7 +20,7 @@
         "crc":">=0.0.1",
         "pomelo-loader":">=0.0.1",
         "pomelo-rpc":">=0.0.5",
-        "pomelo-protocol":">=0.0.2",
+        "pomelo-protocol":">=0.0.3",
         "debug":">=0.7.0"
     },
     "bin":{
