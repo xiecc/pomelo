@@ -34,11 +34,15 @@ The quickest way to get started with pomelo is to utilize the executable `pomelo
 
  Install dependencies:
 
-  $ npm install
+  $ npm install -d
 
  Start the servers:
 
-  $ node app
+  $ pomelo start
+
+ Stop the servers:
+
+  $ pomelo stop
 
 
 ## More Information
@@ -51,7 +55,7 @@ The quickest way to get started with pomelo is to utilize the executable `pomelo
 
 (The MIT License)
 
-Copyright (c) 2012 Netease inc. and other contributors.
+Copyright (c) 2012 Netease, Inc. and other contributors
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
