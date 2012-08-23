@@ -1,13 +1,13 @@
 {
     "name":"pomelo",
-    "version":"0.1.35",
+    "version":"0.1.36",
     "private":false,
     "dependencies":{
         "express":"2.5.2",
         "log4js":">= 0.4.1",
         "socket.io":">=0.9.4",
         "pomelo-schedule":">=0.3.3",
-        "pomelo-monitor":">=0.2.5",
+        "pomelo-monitor":">=0.2.6",
         "aoi-service":"=0.1.2",
         "data-sync":">=0.0.11",
         "v8-profiler":">=3.6.2-1",
