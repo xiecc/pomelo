@@ -9,4 +9,4 @@ node_modules/*
 *.svn
 *.sublime-project
 *.sublime-workspace
-*.swp
+.*

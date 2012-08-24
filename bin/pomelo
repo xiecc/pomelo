@@ -1,0 +1,379 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+var fs = require('fs')
+    , os = require('os')
+    , cp = require('child_process')
+    , client = require('socket.io-client')
+    , utils = require('../lib/util/utils')
+    , ph = require('path')
+    , exec = cp.exec
+    , spawn = cp.spawn;
+
+/**
+ *  Common Variables
+ */
+var args = process.argv.slice(2);
+var TIME_INIT = 1000;
+var TIME_KILL_WAIT = 6000;
+var TIME_STOP_WAIT = 10000;
+var LIST_COMMAND_ADDRESS = 'http://127.0.0.1:3005';
+
+/**
+ * Usage documentation.
+ */
+var usage = ''
+        + '\n'
+        + '  Usage: pomelo [action] [path/option]\n'
+        + '\n'
+        + '  Options:\n'
+        + '    init  [path]              init the program\n'
+        + '    start [option]            start the program\n'
+        + '    stop                      stop the program\n'
+        + '    version                   output framework version\n'
+        + '    help                      output help information\n'
+        + '    [option]                  --debug=serverId:port'
+    ;
+
+/**
+ * Package information.
+ */
+var pkg = JSON.parse(fs.readFileSync(__dirname + '/../package.json'));
+
+/**
+ * Framework version.
+ */
+var version = pkg.version;
+
+/**
+ * Parse command arguments.
+ */
+(function () {
+    var arg = args.shift();
+    switch (arg) {
+        case 'help':
+            legalArgNum(0);
+            abort(usage);
+            break;
+        case 'version':
+            legalArgNum(0);
+            abort(version);
+            break;
+        case 'list':
+            legalArgNum(0);
+            list();
+            break;
+        case 'init':
+            legalArgNum(1);
+            init(args[0]);
+            break;
+        case 'start':
+            start();
+            break;
+        case 'stop':
+            legalArgNum(0);
+            terminal('stop');
+            break;
+        case 'kill':
+            legalArgNum(0);
+            terminal('kill');
+            break;
+        default:
+            abort("The command is error format.");
+            break;
+    }
+})();
+
+/**
+ * Init application at the given directory `path`.
+ *
+ * @param {String} path
+ */
+function init(path) {
+    emptyDirectory(path, function (empty) {
+        if (empty) {
+            createApplicationAt(path);
+        } else {
+            confirm('destination is not empty, continue? ', function (ok) {
+                if (ok) {
+                    process.stdin.destroy();
+                    createApplicationAt(path);
+                } else {
+                    abort('aborting');
+                }
+            });
+        }
+    });
+}
+
+/**
+ * Create directory and files at the given directory `path`.
+ *
+ * @param {String} path
+ */
+function createApplicationAt(path) {
+    var name = '';
+    var cwd = process.cwd();
+    if (path.indexOf('/')) {
+        var str = path.split('/');
+        name = str[str.length - 1];
+    }
+    if (path === '.') {
+        var arr = cwd.split('/');
+        name = arr[arr.length - 1];
+    }
+    if (path === '..') {
+        var arr = cwd.split('/');
+        name = arr[arr.length - 2];
+    }
+    copy(__dirname + '/../template/', path);
+    mkdir(path + '/logs', 0);
+    setTimeout(function () {
+        var repalcefile = [path + '/app.js', path + '/package.json'];
+        for (var i = 0; i < repalcefile.length; i++) {
+            var str = fs.readFileSync(repalcefile[i]).toString();
+            fs.writeFileSync(repalcefile[i], str.replace('$', name));
+        }
+    }, TIME_INIT);
+}
+
+/**
+ * Start application.
+ *
+ */
+function start() {
+    if (args.length > 1 || (args.length == 1 && (args[0] !== 'development' && args[0] !== 'production'))) {
+        abort("The argument is error.");
+    }
+    if (ph.existsSync('./app.js')) {
+        if (ph.existsSync(process.cwd() + '/tmp')) {
+            var ex = exec('ps -p ' + fs.readFileSync(process.cwd() + '/tmp'), function (error, stdout, stderr) {
+                if (stdout.length > 28) {
+                    abort("The program is still running,please stop it first.");
+                }
+            });
+        }
+        var ls = spawn('node', ['app.js', 'env', args.length === 0 ? 'development' : args[0]]);
+
+        //reserve the child process pid
+        fs.writeFile(process.cwd() + '/tmp', ls.pid);
+
+        ls.stdout.on('data', function (data) {
+            console.log('stdout: ' + data);
+        });
+        ls.stderr.on('data', function (data) {
+            console.log('stderr: ' + data);
+        });
+        ls.on('exit', function (code) {
+            console.log('child process exited with code ' + code);
+        });
+    }
+    else {
+        abort("Please go to your pomelo workspace to start the program.");
+    }
+}
+
+/**
+ * List pomelo processes.
+ *
+ */
+function list() {
+    if (ph.existsSync('./tmp')) {
+        fs.readFile('./tmp', function (err, data) {
+            if (err) throw err;
+            var socket = client.connect(LIST_COMMAND_ADDRESS);
+            socket.on('connect', function () {
+                socket.emit('list', Date.now());
+                socket.on('info', function (data) {
+                    console.log(data.info);
+                    process.exit(1);
+                });
+            });
+        });
+    }
+    else {
+        abort("There is no starting program.");
+    }
+}
+
+/**
+ * Terminal application.
+ *
+ */
+function terminal(signal) {
+    if (ph.existsSync('./tmp')) {
+        var ex = exec('ps -p ' + fs.readFileSync('./tmp'), function (error, stdout, stderr) {
+            if (stdout.length <= 28) {
+                fs.unlinkSync('./tmp');
+                abort("The program is stopped.");
+            }
+            else {
+                var socket = client.connect(LIST_COMMAND_ADDRESS);
+                fs.readFile('./tmp', function (err, data) {
+                    if (err) throw err;
+                    console.log("closing the program......\nplease wait......");
+                    if (signal === 'kill') {
+                        socket.on('connect', function () {
+                            socket.emit('kill', Date.now());
+                        });
+                        setTimeout(function () {
+                            exec('kill -9 ' + data);
+                            process.exit(1);
+                        }, TIME_KILL_WAIT);
+                    }
+                    else {
+                        socket.on('connect', function () {
+                            socket.emit('stop', Date.now());
+                        });
+                        setTimeout(function () {
+                            process.exit(1);
+                        }, TIME_STOP_WAIT);
+                    }
+                });
+            }
+        });
+    }
+    else {
+        abort("There is no starting program.");
+    }
+}
+
+/**
+ * Check if the given directory `path` is empty.
+ *
+ * @param {String} path
+ * @param {Function} fn
+ */
+
+function emptyDirectory(path, fn) {
+    fs.readdir(path, function (err, files) {
+        if (err && 'ENOENT' != err.code) throw err;
+        fn(!files || !files.length);
+    });
+}
+
+/**
+ * Prompt confirmation with the given `msg`.
+ *
+ * @param {String} msg
+ * @param {Function} fn
+ */
+
+function confirm(msg, fn) {
+    prompt(msg, function (val) {
+        fn(/^ *y(es)?/i.test(val));
+    });
+}
+
+/**
+ * Prompt input with the given `msg` and callback `fn`.
+ *
+ * @param {String} msg
+ * @param {Function} fn
+ */
+
+function prompt(msg, fn) {
+    // prompt
+    if (' ' == msg[msg.length - 1]) {
+        process.stdout.write(msg);
+    } else {
+        console.log(msg);
+    }
+    // stdin
+    process.stdin.setEncoding('ascii');
+    process.stdin.once('data',function (data) {
+        fn(data);
+    }).resume();
+}
+
+/**
+ * Exit with the given `str`.
+ *
+ * @param {String} str
+ */
+
+function abort(str) {
+    console.error(str);
+    process.exit(1);
+}
+
+/**
+ *
+ * @param {Number} argNum
+ */
+
+function legalArgNum(argNum) {
+    if (args.length != argNum) {
+        console.error("The command arguments number is error.");
+        process.exit(1);
+    }
+}
+
+/**
+ * @param {String} origin
+ * @param {String} target
+ */
+function copy(origin, target) {
+    if (!ph.existsSync(origin)) {
+        console.log(origin + 'is not exist......');
+    }
+    if (!ph.existsSync(target)) {
+        mkdir(target, 0);
+        console.log('   \x1b[36mmakedir\x1b[0m : ' + target);
+    }
+    fs.readdir(origin, function (err, datalist) {
+        if (err) return;
+        for (var i = 0; i < datalist.length; i++) {
+            var oCurrent = origin + '/' + datalist[i];
+            var tCurrent = target + '/' + datalist[i];
+            if (fs.statSync(oCurrent).isFile()) {
+                fs.writeFileSync(tCurrent, fs.readFileSync(oCurrent, ''), '');
+                console.log('   \x1b[36mcreatefile\x1b[0m : ' + oCurrent);
+            }
+            else if (fs.statSync(oCurrent).isDirectory()) {
+                copy(oCurrent, tCurrent);
+            }
+        }
+    });
+}
+
+/**
+ * mkdir
+ *
+ * @param {String} path
+ * @param {Number} mode
+ * @param {Function} cb
+ */
+function mkdir(url, mode, cb) {
+
+    var path = require("path"), arr = url.split("/");
+    mode = mode || 0755;
+    cb = cb || function () {
+    };
+    if (arr[0] == ".") {
+        arr.shift();
+    }
+    if (arr[0] == "..") {
+        arr.splice(0, 2, arr[0] + "/" + arr[1]);
+    }
+    if(arr[0] == ""){
+          arr[0] = "/";
+    }
+
+    function inner(cur) {
+        if (!path.existsSync(cur)) {
+            fs.mkdirSync(cur, mode);
+        }
+        if (arr.length) {
+            inner(cur + "/" + arr.shift());
+        }
+        else {
+            cb();
+        }
+    }
+
+    arr.length && inner(arr.shift());
+    console.log('   \x1b[36mmakedir\x1b[0m : ' + url);
+}
