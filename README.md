@@ -1,7 +1,15 @@
-## pomelo
+## pomelo - a Short Description
 
 Fast, scalable game server framework for  [node](http://nodejs.org).
 Pomelo provides a full stack of game(especially MMO) server development infrastructure, including framework, libraries and tools.
+
+  * Homepage: http://nodejs.netease.com/pomelo
+  * Mailing list: http://groups.google.com/group/pomelo
+  * Documentation: http://node.js.netease.com/pomelo/doc
+  * go to [main site](http://nodejs.netease.com/pomelo) for more information
+  * Wiki: http://github.com/node-pomelo/pomelo/wiki
+  * Issues: http://github.com/node-pomelo/pomelo/issues
+  * Tags: node.js, game, pomelo
 
 ## Viewing demos
 
@@ -45,11 +53,6 @@ The quickest way to get started with pomelo is to utilize the executable `pomelo
   $ pomelo stop
 
 
-## More Information
-  * go to [main site](http://nodejs.netease.com/pomelo) for more information
-  * Join #pomelo on freenode
-  * [Google Group](http://groups.google.com/group/pomelo) for discussion
-  * Visit the [Wiki](http://github.com/node-pomelo/pomelo/wiki)
 
 ## License
 
