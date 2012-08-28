@@ -1,77 +1,115 @@
-/*!
- * Pomelo -- monitorAgent
- * Copyright(c) 2012 fantasyni <fantasyni@163.com>
- * MIT Licensed
- */
+var sclient = require('socket.io-client');
+var EventEmitter = require('events').EventEmitter;
+var util = require('util');
+var utils = require('./util/utils');
+var protocol = require('./util/protocol');
 
- var io = require('socket.io-client');
- var logger = require('./util/log/log').getLogger(__filename);
+var ST_INITED = 1;
+var ST_CONNECTED = 2;
+var ST_REGISTERED = 3;
+var ST_CLOSED = 4;
 
- /**
- * 构造MonitorAgent实例，注入server id, server type等信息 
- */
-var monitorAgent = function(consoleService) {
-	this._consoleService = consoleService;
-	this._serverId = consoleService['_serverId'];
-	this._serverType = consoleService['_serverType'];
+var MonitorAgent = function(opts) {
+	EventEmitter.call(this);
+	this.consoleService = opts.consoleService;
+	this.id = opts.id;
+	this.type = opts.type;
+	this.socket = null;
+	this.reqId = 1;
+	this.callbacks = {};
+	this.state = ST_INITED;
 };
 
-var pro = monitorAgent.prototype;
+util.inherits(MonitorAgent, EventEmitter);
 
-var STATUS_INTERVAL = 5 * 1000; // 60 seconds
-/**
- * 连接到master服务器，并完成注册流程。结果通过cb通知
- */
-pro.connect = function(host,port,cb) {
+module.exports = MonitorAgent;
+
+var pro = MonitorAgent.prototype;
+
+pro.connect = function(port, host, cb) {
+	if(this.state > ST_INITED) {
+		console.error('monitor client has connected or closed.');
+		return;
+	}
+
+	this.socket = sclient.connect(host + ':' + port, {'force new connection': true, 'reconnect': false});
+	
 	var self = this;
-	var socket = this._socket = io.connect(host+":"+port);
-	console.log("monitor listen on "+host+":"+port);
-	var consoleService = this._consoleService;
-	socket.on('connect',function(){
-		socket.emit('register',{serverId:self._serverId,serverType:self._serverType});
+	this.socket.on('register', function(msg) {
+		if(msg && msg.code === protocol.PRO_OK) {
+			self.state = ST_REGISTERED;
+			utils.invokeCallback(cb);
+		}
 	});
 
-	socket.on('working',function(msg){
-		logger.info(msg + "connect to master");
-	});
+	this.socket.on('monitor', function(msg) {
+		if(self.state !== ST_REGISTERED) {
+			return;
+		}
 
-	socket.on('message', function(msg) {
-		consoleService.execute(self,msg.moduleId,"pull",msg.body, function(err, res) {
-			if(data.id) {
-				//通过回调丢给master
-				socket.emit('message', {id: data.id, body: res});
+		msg = protocol.parse(msg);
+		// request from master
+		self.consoleService.execute(msg.moduleId, 'monitorHandler', msg.body, function(err, res) {
+			if(protocol.isRequest(msg)) {
+				var resp = protocol.composeResponse(msg, err, res);
+				if(resp) {
+					self.socket.emit('monitor', resp);
+				}
 			} else {
-				socket.emit('message', {moduleId: data.moduleId, body: res});
+				if(res) {
+					// ignore error for notify
+					var req = protocol.composeRequest(null, msg.moduleId, res);
+					self.socket.emit('monitor', req);
+				}
 			}
 		});
 	});
 	
-	//interval push
-	logger.info("interval push");
-	setInterval(function() {
-		consoleService.execute(self,"systemInfo","push","",function(err, res) {
-			socket.emit('message', {id:consoleService._serverId,serverType:"monitor",dataSource:"master",moduleId: "systemInfo", body: res});
-		});
-	}, STATUS_INTERVAL);
-
-	/*
-	setInterval(function(){
-		consoleService.execute(self,"processInfo","push","",function(err, res) {
-			socket.emit('message', {serverType:"monitor",dataSource:"master",moduleId: "processInfo", body: res});
-		});
-	},STATUS_INTERVAL);
-	*/
+	this.socket.on('connect', function() {
+		if(self.state > ST_INITED) {
+			//ignore reconnect
+			return;
+		}
+		self.state = ST_CONNECTED;
+		var req = {
+			id: self.id, 
+			type: self.type
+		};
+		self.socket.emit('register', req);
+	});
+	
+	this.socket.on('error', function(err) {
+		if(self.state < ST_CONNECTED) {
+			// error occurs during connecting stage
+			utils.invokeCallback(cb, err);
+		} else {
+			self.emit('error', err);
+		}
+	});
+	
+	this.socket.on('disconnect', function(reason) {
+		if(reason === 'booted') {
+			//disconnected by call disconnect function
+			this.state = ST_CLOSED;
+			self.emit('close');
+		} else {
+			//some other reason such as heartbeat timeout
+		}
+	});
 };
 
-/**
- * 关闭monitor
- */
-pro.close = function(cb) {
+pro.close = function() {
+	if(this.state >= ST_CLOSED) {
+		return;
+	}
+	this.state = ST_CLOSED;
+	this.socket.disconnect();
 };
 
-// disconnect, error等
-/*
-pro.on();
-pro.emit();
-*/
-exports.monitorAgent = monitorAgent;
+pro.notify = function(moduleId, msg) {
+	if(this.state !== ST_REGISTERED) {
+		console.error('agent can not notify now, state:' + this.state);
+		return;
+	}
+	this.socket.emit('monitor', protocol.composeRequest(null, moduleId, msg));
+};

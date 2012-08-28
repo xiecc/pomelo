@@ -1,0 +1,13 @@
+{
+    "name":"pomelo-console",
+    "version":"0.0.1",
+    "private":false,
+    "dependencies":{
+    },
+    "devDependencies":{
+        "should":">=0.0.1",
+        "mocha":">=0.0.1", 
+        "flow":">=0.0.1"
+    }
+}
+
