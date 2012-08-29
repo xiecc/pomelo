@@ -127,6 +127,59 @@ describe('agent', function() {
 		}, WAIT_TIME);
 	});
 
+	it('should return error to master if monitor cb with a error by reuqest', function(done) {
+		var monitorId = 'connector-server-1';
+		var monitorType = 'connector';
+		var moduleId = 'testModuleId';
+		var msg = {msg: 'message to monitor'};
+		var errMsg = 'some error message from monitor';
+
+		var reqCount = 0;
+		var respCount = 0;
+
+		var masterConsole = {
+		};
+
+		var monitorConsole = {
+			execute: function(moduleId, method, msg, cb) {
+				reqCount++;
+				moduleId.should.eql(moduleId);
+				cb(new Error(errMsg));
+			}
+		};
+
+		var master = new Master(masterConsole);
+		var monitor = new Monitor({
+			consoleService: monitorConsole, 
+			id: monitorId, 
+			type: monitorType
+		});
+
+		master.listen(masterPort);
+		flow.exec(function() {
+			monitor.connect(masterPort, masterHost, this);
+		}, 
+		function(err) {
+			should.not.exist(err);
+			master.request(monitorId, moduleId, msg, function(err, resp) {
+				respCount++;
+				should.exist(err);
+				err.message.should.eql(errMsg);
+				should.not.exist(resp);
+			});
+		});
+
+		setTimeout(function() {
+			reqCount.should.equal(1);
+			respCount.should.equal(1);
+
+			monitor.close();
+			master.close();
+
+			done();
+		}, WAIT_TIME);
+	});
+
 	it('should forward the message from master to the right monitor by notifyById', function(done) {
 		var monitorId1 = 'connector-server-1';
 		var monitorId2 = 'area-server-1';
