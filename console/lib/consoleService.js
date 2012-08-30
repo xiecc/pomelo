@@ -3,6 +3,14 @@ var utils = require('./util/utils');
 var MasterAgent = require('./masterAgent');
 var MonitorAgent = require('./monitorAgent');
 
+var systemInfo = []; // mem cache
+var nodeInfo = []; 
+var onlineUserList = [];
+var sceneInfos = [];
+var nodes = {};
+//这些统计的cache要能够动态的增删
+//比如说统计各个服务器的systemInfo，如果一台服务器挂了，那么就没有这台服务器的信息
+
 /**
  * ConsoleService Constructor
  * 
@@ -94,11 +102,59 @@ pro.execute = function(moduleId, method, msg, cb) {
 	}
 
 	if(method === 'clientHandler') {
+		console.log("consoleService clientHandler");
 		module.clientHandler(this.agent, msg, cb);
 	} else {
 		module[method](msg, cb);
 	}
 };
+
+/**
+ * 设置状态信息
+ */
+pro.set = function(key,value,moduleId) {
+	if(typeof nodes[key] == "undefined"){
+		nodes[key] = {};
+	}
+	if(moduleId){
+		nodes[key][moduleId] = value;
+	}else{
+		nodes[key] = value;
+	}
+};
+
+/**
+ * 获取状态信息
+ */
+pro.get = function(key,moduleId) {
+	if(nodes[key]&&nodes[key][moduleId]){
+		return nodes[key][moduleId];
+	}else if(nodes[key]){
+		return nodes[key];
+	}else{
+		return nodes[key] = 0;
+	}
+};
+
+pro.refresh = function(){
+	systemInfo = [];
+	nodeInfo = [];
+	console.log(nodes);
+	for(var node in nodes){
+		systemInfo.push(nodes[node].systemInfo);
+		nodeInfo.push(nodes[node].nodeInfo);
+	}
+}
+
+pro.getCollect = function(moduleId){
+	switch (moduleId){
+		case "systemInfo" : return systemInfo; 
+		case "nodeInfo" : return nodeInfo;
+		case "onlineUserList" : return onlineUserList;
+		case "sceneInfos" : return sceneInfos;
+	}
+}
+
 
 var registerRecord = function(module) {
 	return {

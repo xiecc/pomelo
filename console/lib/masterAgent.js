@@ -73,6 +73,8 @@ pro.listen = function(port) {
 
 		// message from monitor
 		socket.on('monitor', function(msg) {
+			//console.log("msg from monitor");
+			//console.log(msg);
 			if(!registered) {
 				// not register yet, ignore any message
 				return;
@@ -115,11 +117,12 @@ pro.listen = function(port) {
 
 		// message from client
 		socket.on('client', function(msg) {
+			console.log("msg from client");
+			console.log(msg);
 			if(!registered) {
 				// not register yet, ignore any message
 				return;
 			}
-
 			if(type !== TYPE_CLIENT) {
 				console.error('invalid message to client, but current connect type is ' + type);
 				return;
@@ -237,7 +240,7 @@ var removeConnection = function(agent, id, type) {
 			}
 		}
 	}
-	if(list.length === 0) {
+	if(typeof list != "undefined" && list.length === 0) {
 		delete agent.typeMap[type];
 	}
 };

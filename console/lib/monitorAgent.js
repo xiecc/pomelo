@@ -8,6 +8,7 @@ var ST_INITED = 1;
 var ST_CONNECTED = 2;
 var ST_REGISTERED = 3;
 var ST_CLOSED = 4;
+var STATUS_INTERVAL = 5 * 1000; // 60 seconds
 
 var MonitorAgent = function(opts) {
 	EventEmitter.call(this);
@@ -96,6 +97,29 @@ pro.connect = function(port, host, cb) {
 			//some other reason such as heartbeat timeout
 		}
 	});
+
+	//interval push
+	setInterval(function(){
+		self.consoleService.execute("systemInfo", 'monitorHandler', {}, function(err, res) {
+			if(res) {
+				// ignore error for notify
+				var req = protocol.composeRequest(null, "systemInfo", res);
+				//console.log(req);
+				self.socket.emit('monitor', req);
+			}
+		});
+	},STATUS_INTERVAL);
+
+	setInterval(function(){
+		self.consoleService.execute("nodeInfo", 'monitorHandler', {}, function(err, res) {
+			if(res) {
+				// ignore error for notify
+				var req = protocol.composeRequest(null, "nodeInfo", res);
+				//console.log(req);
+				self.socket.emit('monitor', req);
+			}
+		});
+	},STATUS_INTERVAL);
 };
 
 pro.close = function() {

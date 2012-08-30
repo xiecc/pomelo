@@ -1,0 +1,54 @@
+/*!
+ * Pomelo -- consoleModule sceneInfo
+ * Copyright(c) 2012 fantasyni <fantasyni@163.com>
+ * MIT Licensed
+ */
+var monitor = require('pomelo-monitor');
+var logger = require('../util/log/log').getLogger(__filename);
+
+var sceneInfo = function(consoleService) {
+	this.consoleService = consoleService;
+};
+
+module.exports = sceneInfo;
+var moduleId = "sceneInfo";
+
+var pro = sceneInfo.prototype;
+ 
+pro.monitorHandler = function(msg, cb) {
+	//collect data
+	var self = this;
+	var serverId = self.consoleService.id;
+	var area = require('../../../../app/domain/area/area');
+	monitorAgent.socket.emit('monitorScene', area.getAllPlayers());
+	cb(null,{serverId:serverId,body:area.getAllPlayers()});
+};
+
+pro.masterHandler = function(msg, cb) {
+	var body=msg.body;
+	this.consoleService.set(msg.serverId, body,moduleId);
+	var length=0;
+    if(msg){length=msg.length;}
+    if(length>0){
+        for(var i=0;i<length;i++){
+            msg[i].position='('+msg[i].x+','+msg[i].y+')';
+            sceneInfos.push(msg[i])
+        }
+        //self.io.sockets.in('web_clients').emit('getSenceInfo',{data:sceneInfos});
+    }
+	if(typeof cb != "undefined"){
+		cb(null,body);
+	}
+};
+
+pro.clientHandler = function(agent,msg, cb) {
+	if(msg.monitorId){
+		// request from client get data from monitor
+		agent.request(msg.monitorId,moduleId,msg,function(err,resp){
+			cb(err,resp);
+		});
+	}else{
+		this.consoleService.refresh();
+		cb(null,this.consoleService.getCollect(moduleId));
+	}
+};
