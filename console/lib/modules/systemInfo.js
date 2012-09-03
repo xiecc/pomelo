@@ -40,7 +40,7 @@ pro.masterHandler = function(msg, cb) {
         m_1:body.loadavg[0],m_5:body.loadavg[1],m_15:body.loadavg[2]
     };
 
-	this.consoleService.set(msg.serverId, oneData,moduleId);
+	this.consoleService.set(moduleId,msg.serverId, oneData);
 	if(typeof cb != "undefined"){
 		cb(null,oneData);
 	}
@@ -54,7 +54,6 @@ pro.clientHandler = function(agent,msg, cb) {
 			cb(err,resp);
 		});
 	}else{
-		this.consoleService.refresh();
-		cb(null,this.consoleService.getCollect(moduleId));
+		cb(null,this.consoleService.get(moduleId));
 	}
 };

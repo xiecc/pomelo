@@ -32,7 +32,7 @@ pro.monitorHandler = function(msg, cb) {
 
 pro.masterHandler = function(msg, cb) {
 	var body=msg.body;
-	this.consoleService.set(msg.serverId, body,moduleId);
+	this.consoleService.set(moduleId,msg.serverId,body);
 	if(typeof cb != "undefined"){
 		cb(null,body);
 	}
@@ -46,7 +46,6 @@ pro.clientHandler = function(agent,msg, cb) {
 			cb(err,resp);
 		});
 	}else{
-		this.consoleService.refresh();
-		cb(null,this.consoleService.getCollect(moduleId));
+		cb(null,this.consoleService.get(moduleId));
 	}
 };

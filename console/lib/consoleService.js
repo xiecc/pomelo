@@ -4,10 +4,6 @@ var MasterAgent = require('./masterAgent');
 var MonitorAgent = require('./monitorAgent');
 var schedule = require('pomelo-schedule');
 
-var systemInfo = []; // mem cache
-var nodeInfo = []; 
-var onlineUserList = [];
-var sceneInfos = [];
 var nodes = {};
 //这些统计的cache要能够动态的增删
 //比如说统计各个服务器的systemInfo，如果一台服务器挂了，那么就没有这台服务器的信息
@@ -120,45 +116,28 @@ pro.execute = function(moduleId, method, msg, cb) {
 /**
  * 设置状态信息
  */
-pro.set = function(key,value,moduleId) {
-	if(typeof nodes[key] === undefined){
-		nodes[key] = {};
+pro.set = function(moduleId,serverId,value) {
+	if(typeof nodes[moduleId] === "undefined"){
+		nodes[moduleId] = {};
 	}
-	if(moduleId){
-		nodes[key][moduleId] = value;
-	}else{
-		nodes[key] = value;
+	if(serverId){
+		nodes[moduleId][serverId] = value;
 	}
 };
 
 /**
  * 获取状态信息
  */
-pro.get = function(key,moduleId) {
-	if(nodes[key]&&nodes[key][moduleId]){
-		return nodes[key][moduleId];
-	}else if(nodes[key]){
-		return nodes[key];
+pro.get = function(moduleId,serverId) {
+	if(!moduleId) {
+		throw new Error("moduleId is required");
+	}
+	if(serverId&&nodes[moduleId]&&nodes[moduleId][serverId]){
+		return nodes[moduleId][serverId];
+	}else if(nodes[moduleId]){
+		return nodes[moduleId];
 	}else{
-		return nodes[key] = 0;
-	}
-};
-
-pro.refresh = function(){
-	systemInfo = [];
-	nodeInfo = [];
-	for(var node in nodes){
-		systemInfo.push(nodes[node].systemInfo);
-		nodeInfo.push(nodes[node].nodeInfo);
-	}
-};
-
-pro.getCollect = function(moduleId){
-	switch (moduleId){
-		case "systemInfo" : return systemInfo; 
-		case "nodeInfo" : return nodeInfo;
-		case "onlineUserList" : return onlineUserList;
-		case "sceneInfos" : return sceneInfos;
+		nodes[moduleId] = {};
 	}
 };
 
