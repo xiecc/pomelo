@@ -15,24 +15,23 @@ var moduleId = "sceneInfo";
 
 var pro = sceneInfo.prototype;
  
-pro.monitorHandler = function(msg, cb) {
+pro.monitorHandler = function(agent,msg, cb) {
 	//collect data
 	var self = this;
 	var serverId = self.consoleService.id;
 	var area = require('../../../../app/domain/area/area');
-	monitorAgent.socket.emit('monitorScene', area.getAllPlayers());
+	//monitorAgent.socket.emit('monitorScene', area.getAllPlayers());
 	cb(null,{serverId:serverId,body:area.getAllPlayers()});
 };
 
-pro.masterHandler = function(msg, cb) {
-	var body=msg.body;
-	this.consoleService.set(msg.serverId, body,moduleId);
+pro.masterHandler = function(agent,msg, cb) {
+
 	var length=0;
     if(msg){length=msg.length;}
     if(length>0){
         for(var i=0;i<length;i++){
             msg[i].position='('+msg[i].x+','+msg[i].y+')';
-            sceneInfos.push(msg[i])
+            this.consoleService.set(monitorId,msg[i],msg.serverId);
         }
         //self.io.sockets.in('web_clients').emit('getSenceInfo',{data:sceneInfos});
     }
@@ -48,7 +47,6 @@ pro.clientHandler = function(agent,msg, cb) {
 			cb(err,resp);
 		});
 	}else{
-		this.consoleService.refresh();
-		cb(null,this.consoleService.getCollect(moduleId));
+		cb(null,this.consoleService.get(moduleId));
 	}
 };

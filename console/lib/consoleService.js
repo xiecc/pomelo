@@ -113,12 +113,14 @@ pro.execute = function(moduleId, method, msg, cb) {
 /**
  * 设置状态信息
  */
-pro.set = function(moduleId,serverId,value) {
+pro.set = function(moduleId,value,serverId) {
 	if(typeof nodes[moduleId] == "undefined"){
 		nodes[moduleId] = {};
 	}
 	if(serverId){
 		nodes[moduleId][serverId] = value;
+	}else{
+		nodes[moduleId] = value;
 	}
 };
 
@@ -131,13 +133,9 @@ pro.get = function(moduleId,serverId) {
 		return nodes[moduleId][serverId];
 	}else if(nodes[moduleId]){
 		return nodes[moduleId];
-	}else{
-		nodes[moduleId] = {};
-	}
+	}// if nodes[moduleId] undefined
+	// do it in the specific module
 };
-
-
-
 
 var registerRecord = function(module) {
 	return {
