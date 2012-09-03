@@ -45,7 +45,7 @@ var cloneError = function(origin) {
 		return origin;
 	}
 	var res = {
-		msg: origin.msg, 
+		message: origin.message, 
 		stack: origin.stack
 	};
 	return res;

@@ -209,6 +209,29 @@ describe('console service', function() {
 	});
 
 	it('should fail if the monitor not exists', function(done) {
-		done();
+		var monitorId = 'connector-server-1';
+		var moduleId = 'testModuleId';
+		var orgMsg = {msg: 'message to someone'};
+
+		var masterConsole = new ConsoleService({
+			type: 'master', 
+			port: masterPort
+		});
+
+		flow.exec(function() {
+			masterConsole.start(this);
+		}, 
+		function(err) {
+			should.not.exist(err);
+			masterConsole.agent.request(monitorId, moduleId, orgMsg, function(err, resp) {
+				should.exist(err);
+				should.not.exist(resp);
+			});
+		});		// end of flow.exec
+
+		setTimeout(function() {
+			masterConsole.stop();
+			done();
+		}, WAIT_TIME);
 	});
 });
