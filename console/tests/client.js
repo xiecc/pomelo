@@ -9,7 +9,7 @@
  	//client request from monitor
  	//var req = protocol.composeRequest("ad2jfa=x","nodeInfo",{moduleId:"nodeInfo",monitorId:"connector-server-1"})
  	//client request from master
- 	var req = protocol.composeRequest("ad2jfa=x","onlineUser",{moduleId:"onlineUser"})
+ 	var req = protocol.composeRequest("ad2jfa=x","systemInfo",{moduleId:"systemInfo"})
 	socket.emit('client',req);
  });
 
