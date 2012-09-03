@@ -15,7 +15,7 @@ var moduleId = "systemInfo";
 
 var pro = systemInfo.prototype;
  
-pro.monitorHandler = function(msg, cb) {
+pro.monitorHandler = function(agent,msg, cb) {
 	//collect data
 	var self = this;
 	monitor.sysmonitor.getSysInfo(function (data) {
@@ -23,7 +23,7 @@ pro.monitorHandler = function(msg, cb) {
     });
 };
 
-pro.masterHandler = function(msg, cb) {
+pro.masterHandler = function(agent,msg, cb) {
 
 	var body=msg.body;
     var wholeMsg={
@@ -40,7 +40,7 @@ pro.masterHandler = function(msg, cb) {
         m_1:body.loadavg[0],m_5:body.loadavg[1],m_15:body.loadavg[2]
     };
 
-	this.consoleService.set(moduleId,msg.serverId, oneData);
+	this.consoleService.set(moduleId,oneData,msg.serverId);
 	if(typeof cb != "undefined"){
 		cb(null,oneData);
 	}
@@ -54,6 +54,6 @@ pro.clientHandler = function(agent,msg, cb) {
 			cb(err,resp);
 		});
 	}else{
-		cb(null,this.consoleService.get(moduleId));
+		cb(null,this.consoleService.get(moduleId) || {});
 	}
 };

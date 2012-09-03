@@ -15,7 +15,7 @@ var moduleId = "nodeInfo";
 
 var pro = nodeInfo.prototype;
  
-pro.monitorHandler = function(msg, cb) {
+pro.monitorHandler = function(agent,msg, cb) {
 	//collect data
 	var self = this;
 	var serverId = self.consoleService.id;
@@ -30,9 +30,9 @@ pro.monitorHandler = function(msg, cb) {
 
 };
 
-pro.masterHandler = function(msg, cb) {
+pro.masterHandler = function(agent,msg, cb) {
 	var body=msg.body;
-	this.consoleService.set(moduleId,msg.serverId,body);
+	this.consoleService.set(moduleId,body,msg.serverId);
 	if(typeof cb != "undefined"){
 		cb(null,body);
 	}
@@ -46,6 +46,6 @@ pro.clientHandler = function(agent,msg, cb) {
 			cb(err,resp);
 		});
 	}else{
-		cb(null,this.consoleService.get(moduleId));
+		cb(null,this.consoleService.get(moduleId) || {});
 	}
 };

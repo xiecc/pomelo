@@ -229,9 +229,9 @@ var removeConnection = function(agent, id, type) {
 				break;
 			}
 		}
-	}
-	if(list.length === 0) {
-		delete agent.typeMap[type];
+		if(list.length === 0) {
+			delete agent.typeMap[type];
+		}
 	}
 };
 
