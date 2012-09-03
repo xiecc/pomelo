@@ -33,6 +33,7 @@ var Service = function(opts) {
 			type: this.type
 		});
 	}
+	this.queue = [];
 };
 
 module.exports = Service;
@@ -55,7 +56,11 @@ pro.stop = function() {
 };
 
 pro.register = function(moduleId, module) {
-	this.modules[moduleId] = registerRecord(module);
+	var record = registerRecord(module);
+	this.modules[moduleId] = record;
+	if(module.interval) {
+		doIntervalRecord(service, record);
+	}
 };
 
 pro.enable = function(moduleId) {
@@ -139,4 +144,17 @@ var registerRecord = function(module) {
 		module: module, 
 		enable: true
 	};
+};
+
+var doIntervalRecord = function(service, record) {
+	var queue = service.queue;
+	if(service.type !== 'master' && record.module.type === 'push') {
+		// push mode for monitor
+		queue.push(record);
+	} else if(service.type === 'master' && record.module.type !== 'pull') {
+		// pull mode for master by default
+		queue.push(record);
+	} else {
+		console.warn('ignore invalid interval record for %j, %j', service.type, record.module.type);
+	}
 };
