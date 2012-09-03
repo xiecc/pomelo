@@ -2,6 +2,7 @@ var utils = require('./util/utils');
 
 var MasterAgent = require('./masterAgent');
 var MonitorAgent = require('./monitorAgent');
+var schedule = require('pomelo-schedule');
 
 var systemInfo = []; // mem cache
 var nodeInfo = []; 
@@ -37,7 +38,6 @@ var Service = function(opts) {
 			type: this.type
 		});
 	}
-	this.queue = [];
 };
 
 module.exports = Service;
@@ -53,33 +53,41 @@ pro.start = function(cb) {
 	} else {
 		this.agent.connect(this.port, this.host, cb);
 	}
+
+	for(var mid in this.modules) {
+		this.enable(mid);
+	}
 };
 
 pro.stop = function() {
+	for(var mid in this.modules) {
+		this.disable(mid);
+	}
 	this.agent.close();
 };
 
 pro.register = function(moduleId, module) {
-	var record = registerRecord(module);
-	this.modules[moduleId] = record;
-	if(module.interval) {
-		doIntervalRecord(service, record);
-	}
+	this.modules[moduleId] = registerRecord(this, moduleId, module);
 };
 
 pro.enable = function(moduleId) {
-	var m = this.modules[moduleId];
-	if(m) {
-		m.enable = true;
+	var record = this.modules[moduleId];
+	if(record && !record.enable) {
+		record.enable = true;
+		addToSchedule(this, record);
 		return true;
 	}
 	return false;
 };
 
 pro.disable = function(moduleId) {
-	var m = this.modules[moduleId];
-	if(m) {
-		m.enable = false;
+	var record = this.modules[moduleId];
+	if(record && record.enable) {
+		record.enable = false;
+		if(record.schedule && record.jobId) {
+			schedule.cancelJob(record.jobId);
+			schedule.jobId = null;
+		}
 		return true;
 	}
 	return false;
@@ -106,19 +114,14 @@ pro.execute = function(moduleId, method, msg, cb) {
 		return;
 	}
 
-	if(method === 'clientHandler') {
-		console.log("consoleService clientHandler");
-		module.clientHandler(this.agent, msg, cb);
-	} else {
-		module[method](msg, cb);
-	}
+	module[method](this.agent, msg, cb);
 };
 
 /**
  * 设置状态信息
  */
 pro.set = function(key,value,moduleId) {
-	if(typeof nodes[key] == "undefined"){
+	if(typeof nodes[key] === undefined){
 		nodes[key] = {};
 	}
 	if(moduleId){
@@ -144,12 +147,11 @@ pro.get = function(key,moduleId) {
 pro.refresh = function(){
 	systemInfo = [];
 	nodeInfo = [];
-	console.log(nodes);
 	for(var node in nodes){
 		systemInfo.push(nodes[node].systemInfo);
 		nodeInfo.push(nodes[node].nodeInfo);
 	}
-}
+};
 
 pro.getCollect = function(moduleId){
 	switch (moduleId){
@@ -158,25 +160,61 @@ pro.getCollect = function(moduleId){
 		case "onlineUserList" : return onlineUserList;
 		case "sceneInfos" : return sceneInfos;
 	}
-}
-
-
-var registerRecord = function(module) {
-	return {
-		module: module, 
-		enable: true
-	};
 };
 
-var doIntervalRecord = function(service, record) {
-	var queue = service.queue;
-	if(service.type !== 'master' && record.module.type === 'push') {
-		// push mode for monitor
-		queue.push(record);
-	} else if(service.type === 'master' && record.module.type !== 'pull') {
-		// pull mode for master by default
-		queue.push(record);
+var registerRecord = function(service, moduleId, module) {
+	var record = {
+		moduleId: moduleId, 
+		module: module, 
+		enable: false
+	};
+
+	if(module.type && module.interval) {
+		if(service.type !== 'master' && record.module.type === 'push' ||
+			service.type === 'master' && record.module.type !== 'push') {
+			// push for monitor or pull for master(default)
+			record.delay = module.delay || 0;
+			record.interval = module.interval || 1;
+			// normalize the arguments
+			if(record.delay < 0) {
+				record.delay = 0;
+			}
+			if(record.interval < 0) {
+				record.interval = 1;
+			}
+			record.interval = Math.ceil(record.interval);
+			record.delay *= 1000;
+			record.interval *= 1000;
+			record.schedule = true;
+		}
+	}
+
+	return record;
+};
+
+var addToSchedule = function(service, record) {
+	if(record && record.schedule) {
+		record.jobId = schedule.scheduleJob(
+			{start: Date.now() + record.delay, period: record.interval}, 
+			doScheduleJob, {service: service, record: record}
+		);
+	}
+};
+
+var doScheduleJob = function(args) {
+	var service = args.service;
+	var record = args.record;
+	if(!service || !record || !record.module || !record.enable) {
+		return;
+	}
+
+	if(service.type === 'master') {
+		record.module.masterHandler(service.agent, null, function(err) {
+			console.error('interval push should not have a callback.');
+		});
 	} else {
-		console.warn('ignore invalid interval record for %j, %j', service.type, record.module.type);
+		record.module.monitorHandler(service.agent, null, function(err) {
+			console.error('interval push should not have a callback.');
+		});
 	}
 };

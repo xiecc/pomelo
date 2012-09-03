@@ -38,7 +38,7 @@ describe('console service', function() {
 		});
 
 		monitorConsole1.register(moduleId1, {
-			monitorHandler: function(msg, cb) {
+			monitorHandler: function(agent, msg, cb) {
 				req1Count++;
 				should.exist(msg);
 				msg.should.eql(msg1);
@@ -54,7 +54,7 @@ describe('console service', function() {
 		});
 
 		monitorConsole2.register(moduleId2, {
-			monitorHandler: function(msg, cb) {
+			monitorHandler: function(agent, msg, cb) {
 				req2Count++;
 				should.exist(msg);
 				msg.should.eql(msg2);
@@ -117,7 +117,7 @@ describe('console service', function() {
 		});
 
 		masterConsole.register(moduleId, {
-			masterHandler: function(msg, cb) {
+			masterHandler: function(agent, msg, cb) {
 				reqCount++;
 				should.exist(msg);
 				msg.should.eql(orgMsg);
@@ -164,13 +164,11 @@ describe('console service', function() {
 		});
 
 		masterConsole.register(moduleId, {
-			masterHandler: function(msg, cb) {
+			masterHandler: function(agent, msg, cb) {
 				// should not come here
 				true.should.not.be.ok();
 			}
 		});
-
-		masterConsole.disable(moduleId);
 
 		var monitorConsole = new ConsoleService({
 			host: masterHost, 
@@ -180,23 +178,23 @@ describe('console service', function() {
 		});
 
 		monitorConsole.register(moduleId, {
-			monitorHandler: function(msg, cb) {
+			monitorHandler: function(agent, msg, cb) {
 				// should not come here
 				true.should.not.be.ok();
 			}
 		});
-
-		monitorConsole.disable(moduleId);
 
 		flow.exec(function() {
 			masterConsole.start(this);
 		}, 
 		function(err) {
 			should.not.exist(err);
+			masterConsole.disable(moduleId);
 			monitorConsole.start(this);
 		}, 
 		function(err) {
 			should.not.exist(err);
+			monitorConsole.disable(moduleId);
 			monitorConsole.agent.notify(moduleId, orgMsg);
 			masterConsole.agent.notifyById(monitorId, moduleId, orgMsg);
 		});		// end of flow.exec
@@ -233,5 +231,80 @@ describe('console service', function() {
 			masterConsole.stop();
 			done();
 		}, WAIT_TIME);
+	});
+
+	it('should invoke masterHandler periodically in pull mode', function(done) {
+		var moduleId = 'testModuleId';
+		var intervalSec = 1;
+		var invokeCount = 0;
+		var turn = 2;
+
+		var masterConsole = new ConsoleService({
+			type: 'master', 
+			port: masterPort
+		});
+
+		masterConsole.register(moduleId, {
+			type: 'pull', 
+			interval: intervalSec, 
+			masterHandler: function(agent, msg, cb) {
+				invokeCount++;
+			}
+		});
+
+		masterConsole.start();
+
+		setTimeout(function() {
+			invokeCount.should.equal(turn);
+			masterConsole.stop();
+			done();
+		}, intervalSec * (turn - 0.5) * 1000);
+	});
+
+	it('should invoke monitorHandler periodically in push mode', function(done) {
+		var monitorId = 'connector-server-1';
+		var monitorType = 'connector';
+		var moduleId = 'testModuleId';
+		var intervalSec = 1;
+		var invokeCount = 0;
+		var turn = 2;
+
+		var masterConsole = new ConsoleService({
+			type: 'master', 
+			port: masterPort
+		});
+
+		var monitorConsole = new ConsoleService({
+			host: masterHost, 
+			port: masterPort, 
+			id: monitorId, 
+			type: monitorType
+		});
+
+		monitorConsole.register(moduleId, {
+			type: 'push', 
+			interval: intervalSec, 
+			monitorHandler: function(agent, msg, cb) {
+				invokeCount++;
+			}
+		});
+
+		flow.exec(function() {
+			masterConsole.start(this);
+		}, 
+		function(err) {
+			should.not.exist(err);
+			monitorConsole.start(this);
+		}, 
+		function(err) {
+			should.not.exist(err);
+		});
+
+		setTimeout(function() {
+			invokeCount.should.equal(turn);
+			monitorConsole.stop();
+			masterConsole.stop();
+			done();
+		}, intervalSec * (turn - 0.5) * 1000);
 	});
 });

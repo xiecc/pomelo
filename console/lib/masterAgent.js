@@ -73,8 +73,6 @@ pro.listen = function(port) {
 
 		// message from monitor
 		socket.on('monitor', function(msg) {
-			//console.log("msg from monitor");
-			//console.log(msg);
 			if(!registered) {
 				// not register yet, ignore any message
 				return;
@@ -106,19 +104,14 @@ pro.listen = function(port) {
 						socket.emit('monitor', resp);
 					}
 				} else {
-					if(res) {
-						// ignore error for notify
-						var req = protocol.composeRequest(null, msg.moduleId, res);
-						socket.emit('monitor', req);
-					}
+					//notify should not have a callback
+					console.error('notify should not have a callback.');
 				}
 			});
 		});		// end of on 'monitor'
 
 		// message from client
 		socket.on('client', function(msg) {
-			console.log("msg from client");
-			console.log(msg);
 			if(!registered) {
 				// not register yet, ignore any message
 				return;
@@ -138,11 +131,8 @@ pro.listen = function(port) {
 						socket.emit('client', resp);
 					}
 				} else {
-					if(res) {
-						// ignore error for notify
-						var req = protocol.composeRequest(null, msg.moduleId, res);
-						socket.emit('client', req);
-					}
+					//notify should not have a callback
+					console.error('notify should not have a callback.');
 				}
 			});
 		});		// end of on 'client'

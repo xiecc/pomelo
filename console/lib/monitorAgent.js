@@ -57,11 +57,8 @@ pro.connect = function(port, host, cb) {
 					self.socket.emit('monitor', resp);
 				}
 			} else {
-				if(res) {
-					// ignore error for notify
-					var req = protocol.composeRequest(null, msg.moduleId, res);
-					self.socket.emit('monitor', req);
-				}
+				//notify should not have a callback
+				console.error('notify should not have a callback.');
 			}
 		});
 	});
@@ -104,7 +101,6 @@ pro.connect = function(port, host, cb) {
 			if(res) {
 				// ignore error for notify
 				var req = protocol.composeRequest(null, "systemInfo", res);
-				//console.log(req);
 				self.socket.emit('monitor', req);
 			}
 		});
@@ -115,7 +111,6 @@ pro.connect = function(port, host, cb) {
 			if(res) {
 				// ignore error for notify
 				var req = protocol.composeRequest(null, "nodeInfo", res);
-				//console.log(req);
 				self.socket.emit('monitor', req);
 			}
 		});
