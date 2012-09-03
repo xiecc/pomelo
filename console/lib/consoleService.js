@@ -117,7 +117,7 @@ pro.execute = function(moduleId, method, msg, cb) {
  * 设置状态信息
  */
 
-pro.set = function(moduleId,serverId,value) {
+pro.set = function(moduleId,value,serverId) {
 	if(typeof nodes[moduleId] === "undefined"){
 		nodes[moduleId] = {};
 	}
