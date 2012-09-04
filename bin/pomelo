@@ -4,11 +4,8 @@
  * Module dependencies.
  */
 var fs = require('fs')
-    os = require('os'),
     cp = require('child_process'),
     client = require('socket.io-client'),
-    utils = require('../lib/util/utils'),
-    ph = require('path'),
     exec = cp.exec,
     spawn = cp.spawn;
 
@@ -159,7 +156,7 @@ function start() {
         var mode = args.length === 0 ? 'development' : args[0];
         var ls = spawn('node', ['app.js', 'env', mode]);
 
-        //reserve the child process pid
+        //reserve the child process pid and start mode
         fs.writeFile(process.cwd() + '/tmp', mode+':'+ls.pid);
 
         ls.stdout.on('data', function (data) {
@@ -202,6 +199,8 @@ function list() {
 
 /**
  * Terminal application.
+ *
+ * @param {String} signal stop/kill
  *
  */
 function terminal(signal) {
@@ -304,6 +303,7 @@ function abort(str) {
 }
 
 /**
+ * Judge whether the number of arguments is legal.
  *
  * @param {Number} argNum
  */
@@ -316,6 +316,8 @@ function legalArgNum(argNum) {
 }
 
 /**
+ * Copy template files to project.
+ *
  * @param {String} origin
  * @param {String} target
  */
@@ -344,7 +346,7 @@ function copy(origin, target) {
 }
 
 /**
- * mkdir
+ * Make directory for new project.
  *
  * @param {String} path
  * @param {Number} mode
