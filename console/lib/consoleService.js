@@ -1,5 +1,6 @@
 var utils = require('./util/utils');
-
+var EventEmitter = require('events').EventEmitter;
+var util = require('util');
 var MasterAgent = require('./masterAgent');
 var MonitorAgent = require('./monitorAgent');
 var schedule = require('pomelo-schedule');
@@ -18,6 +19,7 @@ var nodes = {};
  *                      opts.port {String | Number} listen port for master or master port for monitor
  */
 var Service = function(opts) {
+	EventEmitter.call(this);
 	this.type = opts.type;
 	this.id = opts.id;
 	this.host = opts.host;
@@ -36,6 +38,8 @@ var Service = function(opts) {
 	}
 };
 
+util.inherits(Service, EventEmitter);
+
 module.exports = Service;
 
 var pro = Service.prototype;
@@ -43,12 +47,20 @@ var pro = Service.prototype;
 pro.start = function(cb) {
 	if(this.type === 'master') {
 		this.agent.listen(this.port);
+		exportEvent(this, this.agent, 'registered');
+		exportEvent(this, this.agent, 'disconnect');
 		process.nextTick(function() {
 			utils.invokeCallback(cb);
 		});
 	} else {
 		this.agent.connect(this.port, this.host, cb);
+		exportEvent(this, this.agent, 'close');
 	}
+
+	//exportEvent(this, this.agent, 'error');
+	this.agent.on('error', function(err) {
+		console.error('err~~~~~~~~~~~:' + err.stack);
+	})
 
 	for(var mid in this.modules) {
 		this.enable(mid);
@@ -198,4 +210,10 @@ var doScheduleJob = function(args) {
 			console.error('interval push should not have a callback.');
 		});
 	}
+};
+
+var exportEvent = function(outer, inner, event) {
+	inner.on(event, function() {
+		outer.emit(event, Array.prototype.slice.call(arguments, 0));
+	});
 };

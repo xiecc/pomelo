@@ -1,0 +1,1 @@
+exports.consoleService = require('./lib/consoleService');
