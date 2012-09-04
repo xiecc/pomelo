@@ -9,9 +9,7 @@
         };
     }
 
-
     var root = window;
-    //var eventEmitter = new root.EventEmitter();
     var pomelo = Object.create(EventEmitter.prototype); // object extend from object
     root.pomelo = pomelo;
     var socket = null;
@@ -22,7 +20,7 @@
         pomelo.params = params;
         params.debug = true;
 
-        // socket = io.connect(params.socketUrl, {'force new connection': true, reconnect: true});
+        //socket = io.connect(params.socketUrl, {'force new connection': true, reconnect: true});
 
         var url = window.location.hostname;
 
@@ -83,8 +81,6 @@
 
     var processMessage = function (pomelo, msg) {
         var route;
-        //if(msg.__new_format__) {
-        //new format message
         if (msg.id) {
             //if have a id then find the callback function with the request
             var cb = callbacks[msg.id];
@@ -124,15 +120,6 @@
                 pomelo.emit(msg.body.route, msg.body);
             }
         }
-
-        //} else {
-        //  route = msg.route;
-        //  var code = msg.code;
-        //  if(!route){
-        //    console.log('[pomeloclient.onmessage]Message type error! data: ' + JSON.stringify(msg));
-        //  }
-        //  pomelo.emit(route, msg);
-        //}
     };
 
     var processMessageBatch = function (pomelo, msgs) {
