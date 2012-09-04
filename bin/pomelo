@@ -149,7 +149,7 @@ function start() {
     }
     if (fs.existsSync('./app.js')) {
         if (fs.existsSync(process.cwd() + '/tmp')) {
-            var ex = exec('ps -p ' + fs.readFileSync(process.cwd() + '/tmp'), function (error, stdout, stderr) {
+            var ex = exec('ps -p ' + fs.readFileSync(process.cwd() + '/tmp').toString().split(':')[1], function (error, stdout, stderr) {
                 if (stdout.length > 28) {
                     abort("The program is still running,please stop it first.");
                 }
@@ -222,6 +222,7 @@ function terminal(signal) {
                         });
                         setTimeout(function () {
                             exec('kill -9 ' + data.toString().split(':')[1]);
+                            fs.unlinkSync('./tmp');
                             process.exit(1);
                         }, TIME_KILL_WAIT);
                     }
@@ -230,7 +231,8 @@ function terminal(signal) {
                             socket.emit('stop', Date.now());
                         });
                         setTimeout(function () {
-                            process.exit(1);
+                          fs.unlinkSync('./tmp');
+                          process.exit(1);
                         }, TIME_STOP_WAIT);
                     }
                 });
