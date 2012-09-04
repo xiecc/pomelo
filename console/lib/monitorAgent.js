@@ -94,27 +94,6 @@ pro.connect = function(port, host, cb) {
 			//some other reason such as heartbeat timeout
 		}
 	});
-
-	//interval push
-	setInterval(function(){
-		self.consoleService.execute("systemInfo", 'monitorHandler', {}, function(err, res) {
-			if(res) {
-				// ignore error for notify
-				var req = protocol.composeRequest(null, "systemInfo", res);
-				self.socket.emit('monitor', req);
-			}
-		});
-	},STATUS_INTERVAL);
-
-	setInterval(function(){
-		self.consoleService.execute("nodeInfo", 'monitorHandler', {}, function(err, res) {
-			if(res) {
-				// ignore error for notify
-				var req = protocol.composeRequest(null, "nodeInfo", res);
-				self.socket.emit('monitor', req);
-			}
-		});
-	},STATUS_INTERVAL);
 };
 
 pro.close = function() {

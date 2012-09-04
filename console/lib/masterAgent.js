@@ -33,7 +33,6 @@ pro.listen = function(port) {
 		return;
 	}
 	this.state = ST_STARTED;
-	console.log('port~~~~~~~~~~:%j', port);
 	this.server = sio.listen(port);
 	this.server.set('log level', 0);
 	

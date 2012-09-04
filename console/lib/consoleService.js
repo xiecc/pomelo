@@ -45,22 +45,21 @@ module.exports = Service;
 var pro = Service.prototype;
 
 pro.start = function(cb) {
+	var self = this;
 	if(this.type === 'master') {
 		this.agent.listen(this.port);
-		exportEvent(this, this.agent, 'registered');
+		exportEvent(this, this.agent, 'register');
 		exportEvent(this, this.agent, 'disconnect');
 		process.nextTick(function() {
 			utils.invokeCallback(cb);
 		});
 	} else {
+		console.info('try to connect master: %j, %j, %j', this.type, this.host, this.port);
 		this.agent.connect(this.port, this.host, cb);
 		exportEvent(this, this.agent, 'close');
 	}
 
-	//exportEvent(this, this.agent, 'error');
-	this.agent.on('error', function(err) {
-		console.error('err~~~~~~~~~~~:' + err.stack);
-	})
+	exportEvent(this, this.agent, 'error');
 
 	for(var mid in this.modules) {
 		this.enable(mid);
@@ -214,6 +213,8 @@ var doScheduleJob = function(args) {
 
 var exportEvent = function(outer, inner, event) {
 	inner.on(event, function() {
-		outer.emit(event, Array.prototype.slice.call(arguments, 0));
+		var args = Array.prototype.slice.call(arguments, 0);
+		args.unshift(event);
+		outer.emit.apply(outer, args);
 	});
 };

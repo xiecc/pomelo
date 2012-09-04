@@ -3,50 +3,28 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Pomelo</title>
-    <!--colorbox js end-->
+    <script src="js/lib/jquery-1.2.6.min.js"></script>
     <script src="js/lib/events.js"></script>
     <script src="js/lib/pomeloclient.js"></script>
     <script src="js/lib/protocol.js" type="text/javascript"></script>
     <script src="js/lib/socket.io.js"></script>
-    <script type="text/javascript">
-        var pomelo = window.pomelo;
-        function show() {
-            var username = document.getElementById('loginUser').value;
-            var pwd = document.getElementById('loginPwd').value;
-            if (!username) {
-                alert("请输入用户名");
-                return;
-            }
-            pomelo.init({socketUrl:window.__front_address__, log:true}, function () {
-                pomelo.request({
-                    route:"connector.loginHandler.login",
-                    username:username, password:pwd
-                }, function (data) {
-                    alert("Welcome to pomelo:" + data.user)
-                    enterArea();
-                });
-            });
-        }
-        function enterArea() {
-            pomelo.init({socketUrl:window.__front_address__, log:true}, function () {
-                pomelo.request({
-                    route:"area.areaHandler.createPlayer",
-                    uid:"123", name:"pomelo"
-                }, function (data) {
-                    alert("Your userId is:" + data.user);
-                });
-            });
-        }
-    </script>
+    <script src="js/client.js"></script>
 </head>
 <body>
-<label>帐号： </label>
-<input id="loginUser" type="text" value=""/>
-<br/>
-<label>密码： </label>
-<input id="loginPwd" type="password" value=""/>
-<br/>
-<input id="login" type='button' value="登陆" onclick="show()"/>
+<div id="loginPanel">
+    <label  style="margin-left:24px">Name： </label>
+    <input id="loginUser" type="text" value=""/>
+    <br/>
+    <label>Password： </label>
+    <input id="loginPwd" type="password" value=""/>
+    <br/>
+    <input id="login" type='button' value="Log in" style="margin-left:205px"/>
+    <p id="loginInfo"></p>
+</div>
+<div id="userPanel">
+    <p id="userInfo"></p>
+    <p id="areaInfo"></p>
+</div>
 </body>
 </html>
 
