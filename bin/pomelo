@@ -4,13 +4,13 @@
  * Module dependencies.
  */
 var fs = require('fs')
-    , os = require('os')
-    , cp = require('child_process')
-    , client = require('socket.io-client')
-    , utils = require('../lib/util/utils')
-    , ph = require('path')
-    , exec = cp.exec
-    , spawn = cp.spawn;
+    os = require('os'),
+    cp = require('child_process'),
+    client = require('socket.io-client'),
+    utils = require('../lib/util/utils'),
+    ph = require('path'),
+    exec = cp.exec,
+    spawn = cp.spawn;
 
 /**
  *  Common Variables
@@ -19,22 +19,22 @@ var args = process.argv.slice(2);
 var TIME_INIT = 1000;
 var TIME_KILL_WAIT = 6000;
 var TIME_STOP_WAIT = 10000;
-var LIST_COMMAND_ADDRESS = 'http://127.0.0.1:3005';
 
 /**
  * Usage documentation.
  */
 var usage = ''
         + '\n'
-        + '  Usage: pomelo [action] [path/option]\n'
+        + '  Usage: pomelo [action] [option]\n'
         + '\n'
         + '  Options:\n'
-        + '    init  [path]              init the program\n'
-        + '    start [option]            start the program\n'
-        + '    stop                      stop the program\n'
+        + '    init  [path]              init the application\n'
+        + '    start [option]            start the application\n'
+        + '    stop                      stop the application\n'
+        + '    kill                      kill the application\n'
         + '    version                   output framework version\n'
         + '    help                      output help information\n'
-        + '    [option]                  --debug=serverId:port'
+        + '    [option]                  developement(default)/production' 
     ;
 
 /**
@@ -147,18 +147,20 @@ function start() {
     if (args.length > 1 || (args.length == 1 && (args[0] !== 'development' && args[0] !== 'production'))) {
         abort("The argument is error.");
     }
-    if (ph.existsSync('./app.js')) {
-        if (ph.existsSync(process.cwd() + '/tmp')) {
+    if (fs.existsSync('./app.js')) {
+        if (fs.existsSync(process.cwd() + '/tmp')) {
             var ex = exec('ps -p ' + fs.readFileSync(process.cwd() + '/tmp'), function (error, stdout, stderr) {
                 if (stdout.length > 28) {
                     abort("The program is still running,please stop it first.");
                 }
             });
         }
-        var ls = spawn('node', ['app.js', 'env', args.length === 0 ? 'development' : args[0]]);
+
+        var mode = args.length === 0 ? 'development' : args[0];
+        var ls = spawn('node', ['app.js', 'env', mode]);
 
         //reserve the child process pid
-        fs.writeFile(process.cwd() + '/tmp', ls.pid);
+        fs.writeFile(process.cwd() + '/tmp', mode+':'+ls.pid);
 
         ls.stdout.on('data', function (data) {
             console.log('stdout: ' + data);
@@ -180,10 +182,10 @@ function start() {
  *
  */
 function list() {
-    if (ph.existsSync('./tmp')) {
+     if (fs.existsSync('./tmp')) {
         fs.readFile('./tmp', function (err, data) {
             if (err) throw err;
-            var socket = client.connect(LIST_COMMAND_ADDRESS);
+            var socket = client.connect(getAddress(data.toString().split(':')[0]));
             socket.on('connect', function () {
                 socket.emit('list', Date.now());
                 socket.on('info', function (data) {
@@ -203,15 +205,15 @@ function list() {
  *
  */
 function terminal(signal) {
-    if (ph.existsSync('./tmp')) {
-        var ex = exec('ps -p ' + fs.readFileSync('./tmp'), function (error, stdout, stderr) {
+    if (fs.existsSync('./tmp')) {
+        var ex = exec('ps -p ' + fs.readFileSync('./tmp').toString().split(':')[1], function (error, stdout, stderr) {
             if (stdout.length <= 28) {
                 fs.unlinkSync('./tmp');
                 abort("The program is stopped.");
             }
             else {
-                var socket = client.connect(LIST_COMMAND_ADDRESS);
-                fs.readFile('./tmp', function (err, data) {
+               fs.readFile('./tmp', function (err, data) {
+                  var socket = client.connect(getAddress(data.toString().split(':')[0]));
                     if (err) throw err;
                     console.log("closing the program......\nplease wait......");
                     if (signal === 'kill') {
@@ -219,7 +221,7 @@ function terminal(signal) {
                             socket.emit('kill', Date.now());
                         });
                         setTimeout(function () {
-                            exec('kill -9 ' + data);
+                            exec('kill -9 ' + data.toString().split(':')[1]);
                             process.exit(1);
                         }, TIME_KILL_WAIT);
                     }
@@ -316,10 +318,10 @@ function legalArgNum(argNum) {
  * @param {String} target
  */
 function copy(origin, target) {
-    if (!ph.existsSync(origin)) {
+    if (!fs.existsSync(origin)) {
         console.log(origin + 'is not exist......');
     }
-    if (!ph.existsSync(target)) {
+    if (!fs.existsSync(target)) {
         mkdir(target, 0);
         console.log('   \x1b[36mmakedir\x1b[0m : ' + target);
     }
@@ -348,7 +350,7 @@ function copy(origin, target) {
  */
 function mkdir(url, mode, cb) {
 
-    var path = require("path"), arr = url.split("/");
+    var arr = url.split("/");
     mode = mode || 0755;
     cb = cb || function () {
     };
@@ -363,7 +365,7 @@ function mkdir(url, mode, cb) {
     }
 
     function inner(cur) {
-        if (!path.existsSync(cur)) {
+        if (!fs.existsSync(cur)) {
             fs.mkdirSync(cur, mode);
         }
         if (arr.length) {
@@ -377,3 +379,16 @@ function mkdir(url, mode, cb) {
     arr.length && inner(arr.shift());
     console.log('   \x1b[36mmakedir\x1b[0m : ' + url);
 }
+
+/**
+ * Get address for command query and terminal
+ *
+ * @param {String} mode development/production 
+ * @return {String} address for command
+ */
+function getAddress(mode){
+   var file = require(process.cwd()+"/config/master.json");
+   var config = file[mode];
+   return "http://"+config.host+":"+config.port;
+}
+
