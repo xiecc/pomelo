@@ -43,9 +43,15 @@ pro.masterHandler = function(agent,msg, cb) {
 pro.clientHandler = function(agent,msg, cb) {
 	if(msg.monitorId){
 		// request from client get data from monitor
-		agent.request(msg.monitorId,moduleId,msg,function(err,resp){
-			cb(err,resp);
-		});
+		if(msg.monitorId != 'master'){
+			agent.request(msg.monitorId,moduleId,msg,function(err,resp){
+				cb(err,resp);
+			});
+		}else{
+			self.monitorHandler(agent,msg,function(err,result){
+				cb(err,result);
+			})
+		}
 	}else{
 		cb(null,this.consoleService.get(moduleId));
 	}

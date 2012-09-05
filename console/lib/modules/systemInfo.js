@@ -40,8 +40,17 @@ pro.masterHandler = function(agent,msg, cb) {
         m_1:body.loadavg[0],m_5:body.loadavg[1],m_15:body.loadavg[2]
     };
 
+    // data interval pushed from monitor
 	this.consoleService.set(moduleId,oneData,msg.serverId);
-	if(typeof cb != "undefined"){
+	/*
+	// master itself data
+	this.monitorHandler(agent,msg,function(err,result){
+		this.consoleService.set(moduleId,oneData,msg.serverId);
+	});
+	*/
+	// request should have a cb
+	// notify should not have a cb
+	if(msg&&msg.reqId){
 		cb(null,oneData);
 	}
 };
@@ -50,9 +59,15 @@ pro.clientHandler = function(agent,msg, cb) {
 
 	if(msg.monitorId){
 		// request from client get data from monitor
-		agent.request(msg.monitorId,moduleId,msg,function(err,resp){
-			cb(err,resp);
-		});
+		if(msg.monitorId != 'master'){
+			agent.request(msg.monitorId,moduleId,msg,function(err,resp){
+				cb(err,resp);
+			});
+		}else{
+			self.monitorHandler(agent,msg,function(err,result){
+				cb(err,result);
+			})
+		}
 	}else{
 		cb(null,this.consoleService.get(moduleId) || {});
 	}
