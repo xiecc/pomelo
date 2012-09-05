@@ -1,8 +1,6 @@
 var should = require('should');
 var flow = require('flow');
-var Master = require('../lib/masterAgent');
-var Monitor = require('../lib/monitorAgent');
-var ConsoleService = require('../lib/consoleService');
+var ConsoleService = require('..');
 
 var WAIT_TIME = 100;
 
@@ -25,12 +23,11 @@ describe('console service', function() {
 		var resp1Count = 0;
 		var resp2Count = 0;
 
-		var masterConsole = new ConsoleService({
-			type: 'master', 
+		var masterConsole = ConsoleService.createMasterConsole({
 			port: masterPort
 		});
 
-		var monitorConsole1 = new ConsoleService({
+		var monitorConsole1 = ConsoleService.createMonitorConsole({
 			host: masterHost, 
 			port: masterPort, 
 			id: monitorId1, 
@@ -46,7 +43,7 @@ describe('console service', function() {
 			}
 		});
 
-		var monitorConsole2 = new ConsoleService({
+		var monitorConsole2 = ConsoleService.createMonitorConsole({
 			host: masterHost, 
 			port: masterPort, 
 			id: monitorId2, 
@@ -111,8 +108,7 @@ describe('console service', function() {
 
 		var reqCount = 0;
 
-		var masterConsole = new ConsoleService({
-			type: 'master', 
+		var masterConsole = ConsoleService.createMasterConsole({
 			port: masterPort
 		});
 
@@ -124,7 +120,7 @@ describe('console service', function() {
 			}
 		});
 
-		var monitorConsole = new ConsoleService({
+		var monitorConsole =ConsoleService.createMonitorConsole({
 			host: masterHost, 
 			port: masterPort, 
 			id: monitorId, 
@@ -158,8 +154,7 @@ describe('console service', function() {
 		var moduleId = 'testModuleId';
 		var orgMsg = {msg: 'message to someone'};
 
-		var masterConsole = new ConsoleService({
-			type: 'master', 
+		var masterConsole = ConsoleService.createMasterConsole({
 			port: masterPort
 		});
 
@@ -170,7 +165,7 @@ describe('console service', function() {
 			}
 		});
 
-		var monitorConsole = new ConsoleService({
+		var monitorConsole = ConsoleService.createMonitorConsole({
 			host: masterHost, 
 			port: masterPort, 
 			id: monitorId, 
@@ -211,8 +206,7 @@ describe('console service', function() {
 		var moduleId = 'testModuleId';
 		var orgMsg = {msg: 'message to someone'};
 
-		var masterConsole = new ConsoleService({
-			type: 'master', 
+		var masterConsole = ConsoleService.createMasterConsole({
 			port: masterPort
 		});
 
@@ -239,8 +233,7 @@ describe('console service', function() {
 		var invokeCount = 0;
 		var turn = 2;
 
-		var masterConsole = new ConsoleService({
-			type: 'master', 
+		var masterConsole = ConsoleService.createMasterConsole({
 			port: masterPort
 		});
 
@@ -269,12 +262,11 @@ describe('console service', function() {
 		var invokeCount = 0;
 		var turn = 2;
 
-		var masterConsole = new ConsoleService({
-			type: 'master', 
+		var masterConsole = ConsoleService.createMasterConsole({
 			port: masterPort
 		});
 
-		var monitorConsole = new ConsoleService({
+		var monitorConsole = ConsoleService.createMonitorConsole({
 			host: masterHost, 
 			port: masterPort, 
 			id: monitorId, 
