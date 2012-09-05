@@ -160,10 +160,10 @@ function start() {
         fs.writeFile(process.cwd() + '/tmp', mode+':'+ls.pid);
 
         ls.stdout.on('data', function (data) {
-            console.log('stdout: ' + data);
+            console.log(data.toString());
         });
         ls.stderr.on('data', function (data) {
-            console.log('stderr: ' + data);
+            console.log(data.toString());
         });
         ls.on('exit', function (code) {
             console.log('child process exited with code ' + code);
