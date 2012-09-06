@@ -25,11 +25,10 @@ pro.monitorHandler = function(agent,msg, cb) {
 };
 
 pro.masterHandler = function(agent,msg, cb) {
-
 	var body=msg.body;
  
     var oneData={
-    	Time:body.iostat.date,hostname:body.hostname,serverId:msg.serverId,cpu_user:body.iostat.cpu.cpu_user,
+		Time:body.iostat.date,hostname:body.hostname,serverId:msg.serverId,cpu_user:body.iostat.cpu.cpu_user,
         cpu_nice:body.iostat.cpu.cpu_nice,cpu_system:body.iostat.cpu.cpu_system,cpu_iowait:body.iostat.cpu.cpu_iowait,
         cpu_steal:body.iostat.cpu.cpu_steal,cpu_idle:body.iostat.cpu.cpu_idle,tps:body.iostat.disk.tps,
         kb_read:body.iostat.disk.kb_read,kb_wrtn:body.iostat.disk.kb_wrtn,kb_read_per:body.iostat.disk.kb_read_per,
@@ -48,7 +47,6 @@ pro.masterHandler = function(agent,msg, cb) {
 };
 
 pro.clientHandler = function(agent,msg, cb) {
-
 	if(msg.monitorId !='all'){
 		// request from client get data from monitor
 		agent.request(msg.monitorId,moduleId,msg,function(err,resp){

@@ -5,31 +5,30 @@ var MasterAgent = require('./masterAgent');
 var MonitorAgent = require('./monitorAgent');
 var schedule = require('pomelo-schedule');
 
-//这些统计的cache要能够动态的增删
-//比如说统计各个服务器的systemInfo，如果一台服务器挂了，那么就没有这台服务器的信息
-
 /**
  * ConsoleService Constructor
  * 
  * @param {Object} opts construct parameter
- *                      opts.type {String} server type, 'master' for master server
+ *                      opts.type {String} server type, 'master', 'connector', etc.
  *                      opts.id {String} server id
  *                      opts.host {String} (monitor only) master server host
  *                      opts.port {String | Number} listen port for master or master port for monitor
+ *                      opts.master {Boolean} current service is master or monitor
  */
-var Service = function(opts) {
+var ConsoleService = function(opts) {
 	EventEmitter.call(this);
-	this.type = opts.type;
-	this.id = opts.id;
-	this.host = opts.host;
 	this.port = opts.port;
 	this.nodes = {};
+	this.master = opts.master;
 
 	this.modules = {};
 
-	if(this.type === 'master') {
+	if(this.master) {
 		this.agent = new MasterAgent(this);
 	} else {
+		this.type = opts.type;
+		this.id = opts.id;
+		this.host = opts.host;
 		this.agent = new MonitorAgent({
 			consoleService: this, 
 			id: this.id, 
@@ -38,15 +37,12 @@ var Service = function(opts) {
 	}
 };
 
-util.inherits(Service, EventEmitter);
+util.inherits(ConsoleService, EventEmitter);
 
-module.exports = Service;
-
-var pro = Service.prototype;
+var pro = ConsoleService.prototype;
 
 pro.start = function(cb) {
-	var self = this;
-	if(this.type === 'master') {
+	if(this.master) {
 		this.agent.listen(this.port);
 		exportEvent(this, this.agent, 'register');
 		exportEvent(this, this.agent, 'disconnect');
@@ -164,8 +160,8 @@ var registerRecord = function(service, moduleId, module) {
 	};
 
 	if(module.type && module.interval) {
-		if(service.type !== 'master' && record.module.type === 'push' ||
-			service.type === 'master' && record.module.type !== 'push') {
+		if(!service.master && record.module.type === 'push' ||
+			service.master && record.module.type !== 'push') {
 			// push for monitor or pull for master(default)
 			record.delay = module.delay || 0;
 			record.interval = module.interval || 1;
@@ -202,7 +198,7 @@ var doScheduleJob = function(args) {
 		return;
 	}
 
-	if(service.type === 'master') {
+	if(service.master) {
 		record.module.masterHandler(service.agent, null, function(err) {
 			console.error('interval push should not have a callback.');
 		});
@@ -219,4 +215,29 @@ var exportEvent = function(outer, inner, event) {
 		args.unshift(event);
 		outer.emit.apply(outer, args);
 	});
+};
+
+/**
+ * Create master ConsoleService
+ * 
+ * @param {Object} opts construct parameter
+ *                      opts.port {String | Number} listen port for master console
+ */
+module.exports.createMasterConsole = function(opts) {
+	opts = opts || {};
+	opts.master = true;
+	return new ConsoleService(opts);
+};
+
+/**
+ * Create monitor ConsoleService
+ * 
+ * @param {Object} opts construct parameter
+ *                      opts.type {String} server type, 'master', 'connector', etc.
+ *                      opts.id {String} server id
+ *                      opts.host {String} master server host
+ *                      opts.port {String | Number} master port
+ */
+module.exports.createMonitorConsole = function(opts) {
+	return new ConsoleService(opts);
 };
