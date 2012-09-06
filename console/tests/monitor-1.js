@@ -6,7 +6,7 @@ var nodeInfo = require('../lib/modules/nodeInfo');
 var onlineUser = require('../lib/modules/onlineUser');
 
 var masterHost = '127.0.0.1';
-var masterPort = 801;
+var masterPort = 3005;
 var monitorId = 'connector-server-1';
 
 var monitorConsole = new ConsoleService({

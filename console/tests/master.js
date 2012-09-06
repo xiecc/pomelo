@@ -8,7 +8,7 @@ var onlineUser = require('../lib/modules/onlineUser');
 var util = require('util');
 
 var masterHost = '127.0.0.1';
-var masterPort = 801;
+var masterPort = 3005;
 
 var masterConsole = new ConsoleService({
 	type : "master",
