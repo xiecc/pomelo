@@ -45,7 +45,7 @@ pro.masterHandler = function(agent,msg, cb) {
 pro.clientHandler = function(agent,msg, cb) {
 	var logs = [];
 	var logfile=msg.logfile;
-	if(msg.monitorId){
+	if(msg.monitorId != 'all'){
 		// request from client get data from monitor
 		agent.request(msg.monitorId,moduleId,msg,function(err,resp){
 			utils.invokeCallback(cb,err,resp);

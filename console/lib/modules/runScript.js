@@ -42,7 +42,7 @@ pro.masterHandler = function(agent,msg, cb) {
 pro.clientHandler = function(agent,msg, cb) {
 	var nodes = this.consoleService
 	var self = this;
-	if(msg.monitorId){
+	if(msg.monitorId != 'all'){
 		// request from client get data from monitor
 		agent.request(msg.monitorId,moduleId,msg,function(err,resp){
 			utils.invokeCallback(cb,err,resp);
