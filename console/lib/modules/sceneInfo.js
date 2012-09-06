@@ -5,6 +5,7 @@
  */
 var monitor = require('pomelo-monitor');
 var logger = require('../util/log/log').getLogger(__filename);
+var utils = require('../util/utils');
 
 var sceneInfo = function(consoleService) {
 	this.consoleService = consoleService;
@@ -21,7 +22,7 @@ pro.monitorHandler = function(agent,msg, cb) {
 	var serverId = self.consoleService.id;
 	var area = require('../../../../app/domain/area/area');
 	//monitorAgent.socket.emit('monitorScene', area.getAllPlayers());
-	cb(null,{serverId:serverId,body:area.getAllPlayers()});
+	utils.invokeCallback(cb,null,{serverId:serverId,body:area.getAllPlayers()});
 };
 
 pro.masterHandler = function(agent,msg, cb) {
@@ -35,24 +36,18 @@ pro.masterHandler = function(agent,msg, cb) {
         }
         //self.io.sockets.in('web_clients').emit('getSenceInfo',{data:sceneInfos});
     }
-	if(typeof cb != "undefined"){
-		cb(null,body);
+	if(msg&&msg.reqId){
+		utils.invokeCallback(cb,null,body);
 	}
 };
 
 pro.clientHandler = function(agent,msg, cb) {
-	if(msg.monitorId){
+	if(msg.monitorId !='all'){
 		// request from client get data from monitor
-		if(msg.monitorId != 'master'){
-			agent.request(msg.monitorId,moduleId,msg,function(err,resp){
-				cb(err,resp);
-			});
-		}else{
-			self.monitorHandler(agent,msg,function(err,result){
-				cb(err,result);
-			})
-		}
+		agent.request(msg.monitorId,moduleId,msg,function(err,resp){
+			utils.invokeCallback(cb,err,resp);
+		});
 	}else{
-		cb(null,this.consoleService.get(moduleId));
+		utils.invokeCallback(cb,null,this.consoleService.get(moduleId));
 	}
 };

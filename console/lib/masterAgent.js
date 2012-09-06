@@ -51,6 +51,7 @@ pro.listen = function(port) {
 					// client connection not join the map
 					type = msg.type;
 					registered = true;
+					console.log('client connected to master');
 					return;
 				}
 
@@ -111,6 +112,7 @@ pro.listen = function(port) {
 
 		// message from client
 		socket.on('client', function(msg) {
+			console.log(msg);
 			if(!registered) {
 				// not register yet, ignore any message
 				return;
@@ -119,7 +121,6 @@ pro.listen = function(port) {
 				console.error('invalid message to client, but current connect type is ' + type);
 				return;
 			}
-
 			msg = protocol.parse(msg);
 			// a request or a notify from client 
 			// and client should not have any response to master for master would not request anything from client

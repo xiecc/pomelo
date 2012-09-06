@@ -7,6 +7,7 @@ var monitor = require('pomelo-monitor');
 var logger = require('../util/log/log').getLogger(__filename);
 var ml = require('../util/monitorLog');
 var serverUtil = require('../util/serverUtil');
+var utils = require('../util/utils');
 
 var monitorLog = function(consoleService) {
 	this.consoleService = consoleService;
@@ -22,7 +23,7 @@ pro.monitorHandler = function(agent,msg, cb) {
 	var self = this;
 	var serverId = self.consoleService.id;
 	ml.getLogs(msg, function (data) {
-        cb(null, {serverId:serverId,body:data});
+		utils.invokeCallback(cb,null,{serverId:serverId,body:data})
     });
 };
 
@@ -36,8 +37,8 @@ pro.masterHandler = function(agent,msg, cb) {
     	this.consoleService.set(logfile,datas[i],datas[i].serverId);
     }
 
-	if(typeof cb != "undefined"){
-		cb(null,body);
+	if(msg&&msg.reqId){
+		utils.invokeCallback(cb,null,body);
 	}
 };
 
@@ -47,7 +48,7 @@ pro.clientHandler = function(agent,msg, cb) {
 	if(msg.monitorId){
 		// request from client get data from monitor
 		agent.request(msg.monitorId,moduleId,msg,function(err,resp){
-			cb(err,resp);
+			utils.invokeCallback(cb,err,resp);
 		});
 	}else{
 		var files = this.consoleService.get(logfile) || {};

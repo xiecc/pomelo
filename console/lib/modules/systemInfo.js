@@ -5,6 +5,7 @@
  */
 var monitor = require('pomelo-monitor');
 var logger = require('../util/log/log').getLogger(__filename);
+var utils = require('../util/utils');
 
 var systemInfo = function(consoleService) {
 	this.consoleService = consoleService;
@@ -19,18 +20,14 @@ pro.monitorHandler = function(agent,msg, cb) {
 	//collect data
 	var self = this;
 	monitor.sysmonitor.getSysInfo(function (data) {
-        cb(null, {serverId:self.consoleService.id,body:data});
+		utils.invokeCallback(cb,null,{serverId:self.consoleService.id,body:data});
     });
 };
 
 pro.masterHandler = function(agent,msg, cb) {
 
 	var body=msg.body;
-    var wholeMsg={
-        system:body.hostname+','+body.type+','+body.arch+''+body.release+','+body.uptime,
-        cpu:JSON.stringify(body.cpus[0])+';'+JSON.stringify(body.cpus[1]),
-        start_time:body.iostat.date
-    };
+ 
     var oneData={
     	Time:body.iostat.date,hostname:body.hostname,serverId:msg.serverId,cpu_user:body.iostat.cpu.cpu_user,
         cpu_nice:body.iostat.cpu.cpu_nice,cpu_system:body.iostat.cpu.cpu_system,cpu_iowait:body.iostat.cpu.cpu_iowait,
@@ -42,33 +39,22 @@ pro.masterHandler = function(agent,msg, cb) {
 
     // data interval pushed from monitor
 	this.consoleService.set(moduleId,oneData,msg.serverId);
-	/*
-	// master itself data
-	this.monitorHandler(agent,msg,function(err,result){
-		this.consoleService.set(moduleId,oneData,msg.serverId);
-	});
-	*/
+
 	// request should have a cb
 	// notify should not have a cb
 	if(msg&&msg.reqId){
-		cb(null,oneData);
+		utils.invokeCallback(cb,null,oneData);
 	}
 };
 
 pro.clientHandler = function(agent,msg, cb) {
 
-	if(msg.monitorId){
+	if(msg.monitorId !='all'){
 		// request from client get data from monitor
-		if(msg.monitorId != 'master'){
-			agent.request(msg.monitorId,moduleId,msg,function(err,resp){
-				cb(err,resp);
-			});
-		}else{
-			self.monitorHandler(agent,msg,function(err,result){
-				cb(err,result);
-			})
-		}
+		agent.request(msg.monitorId,moduleId,msg,function(err,resp){
+			utils.invokeCallback(cb,err,resp);
+		});
 	}else{
-		cb(null,this.consoleService.get(moduleId) || {});
+		utils.invokeCallback(cb,null,this.consoleService.get(moduleId) || {});
 	}
 };

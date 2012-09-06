@@ -5,7 +5,6 @@ var MasterAgent = require('./masterAgent');
 var MonitorAgent = require('./monitorAgent');
 var schedule = require('pomelo-schedule');
 
-var nodes = {};
 //这些统计的cache要能够动态的增删
 //比如说统计各个服务器的systemInfo，如果一台服务器挂了，那么就没有这台服务器的信息
 
@@ -24,6 +23,7 @@ var Service = function(opts) {
 	this.id = opts.id;
 	this.host = opts.host;
 	this.port = opts.port;
+	this.nodes = {};
 
 	this.modules = {};
 
@@ -129,7 +129,8 @@ pro.execute = function(moduleId, method, msg, cb) {
  */
 
 pro.set = function(moduleId,value,serverId) {
-	if(typeof nodes[moduleId] === "undefined"){
+	var nodes = this.nodes;
+	if(!nodes[moduleId]){
 		nodes[moduleId] = {};
 	}
 	if(serverId){
@@ -143,6 +144,7 @@ pro.set = function(moduleId,value,serverId) {
  * 获取状态信息
  */
 pro.get = function(moduleId,serverId) {
+	var nodes = this.nodes;
 	if(!moduleId) {
 		throw new Error("moduleId is required");
 	}

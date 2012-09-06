@@ -5,6 +5,7 @@
  */
 var monitor = require('pomelo-monitor');
 var logger = require('../util/log/log').getLogger(__filename);
+var utils = require('../util/utils');
 var monitor = require('pomelo-monitor');
 var ml = require('../util/monitorLog');
 var vm = require('vm');
@@ -31,13 +32,11 @@ pro.monitorHandler = function(agent,msg, cb) {
     var serverId = this.consoleService.id;
     var context = vm.createContext(initContext);
     var result = vm.runInContext(msg, context);
-    cb(null,result);
+    utils.invokeCallback(cb,null,result);
 };
 
 pro.masterHandler = function(agent,msg, cb) {
-	if(typeof cb != "undefined"){
-		cb(null,msg);
-	}
+	
 };
 
 pro.clientHandler = function(agent,msg, cb) {
@@ -45,14 +44,8 @@ pro.clientHandler = function(agent,msg, cb) {
 	var self = this;
 	if(msg.monitorId){
 		// request from client get data from monitor
-		if(msg.monitorId != 'master'){
-			agent.request(msg.monitorId,moduleId,msg,function(err,resp){
-				cb(err,resp);
-			});
-		}else{
-			self.monitorHandler(agent,msg,function(err,result){
-				cb(err,result);
-			})
-		}
+		agent.request(msg.monitorId,moduleId,msg,function(err,resp){
+			utils.invokeCallback(cb,err,resp);
+		});
 	}
 };
