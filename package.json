@@ -1,6 +1,6 @@
 {
     "name":"pomelo",
-    "version":"0.1.42",
+    "version":"0.1.43",
     "private":false,
     "dependencies":{
         "express":"2.5.2",
@@ -21,7 +21,8 @@
         "pomelo-loader":">=0.0.4",
         "pomelo-rpc":">=0.0.7",
         "pomelo-protocol":">=0.0.3",
-        "debug":">=0.7.0"
+        "debug":">=0.7.0", 
+        "mysql": ">=0.9.5"
     },
     "bin":{
         "pomelo":"./bin/pomelo"
