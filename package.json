@@ -20,9 +20,7 @@
         "crc":">=0.0.1",
         "pomelo-loader":">=0.0.4",
         "pomelo-rpc":">=0.0.7",
-        "pomelo-protocol":">=0.0.3",
-        "debug":">=0.7.0", 
-        "mysql": ">=0.9.5"
+        "pomelo-protocol":">=0.0.3"
     },
     "bin":{
         "pomelo":"./bin/pomelo"

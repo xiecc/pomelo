@@ -1,7 +1,7 @@
 var pomelo = require('pomelo');
 var appTemplate = pomelo.appTemplate;
 var RPC_FLUSH_INTERVAL = 30;
-var app = appTemplate.init();
+var app = pomelo.createApp();
 
 app.set('name', '$');
 app.set('dirname', __dirname);
