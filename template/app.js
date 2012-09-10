@@ -1,11 +1,11 @@
 var pomelo = require('pomelo');
-var appTemplate = pomelo.appTemplate;
 var RPC_FLUSH_INTERVAL = 30;
 var app = pomelo.createApp();
 
 app.set('name', '$');
 app.set('dirname', __dirname);
-appTemplate.defaultConfig(app);
+
+app.defaultConfiguration();
 
 app.configure('production|development', function () {
     if (app.serverType !== 'master') {
@@ -13,7 +13,7 @@ app.configure('production|development', function () {
     }
 });
 
-appTemplate.done(app);
+app.loadDefaultComponents();
 
 app.start();
 
