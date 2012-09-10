@@ -11,6 +11,7 @@ app.configure('production|development', function () {
     if (app.serverType !== 'master') {
         app.load(pomelo.remote, {cacheMsg:true, interval:RPC_FLUSH_INTERVAL});
     }
+    app.set('mysql', app.get('dirname') + '/config/mysql.json');
 });
 
 app.loadDefaultComponents();
