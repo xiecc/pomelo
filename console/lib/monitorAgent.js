@@ -104,6 +104,14 @@ pro.close = function() {
 	this.socket.disconnect();
 };
 
+pro.set = function(moduleId, value) {
+	this.consoleService.set(moduleId, value);
+};
+
+pro.get = function(moduleId) {
+	return this.consoleService.get(moduleId);
+};
+
 pro.notify = function(moduleId, msg) {
 	if(this.state !== ST_REGISTERED) {
 		console.error('agent can not notify now, state:' + this.state);

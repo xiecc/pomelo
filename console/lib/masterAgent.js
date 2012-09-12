@@ -156,6 +156,14 @@ pro.close = function() {
 	this.server.server.close();
 };
 
+pro.set = function(moduleId, value) {
+	this.consoleService.set(moduleId, value);
+};
+
+pro.get = function(moduleId) {
+	return this.consoleService.get(moduleId);
+};
+
 pro.request = function(serverId, moduleId, msg, cb) {
 	if(this.state > ST_STARTED) {
 		return;

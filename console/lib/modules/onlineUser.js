@@ -6,49 +6,52 @@
 var monitor = require('pomelo-monitor');
 var logger = require('../util/log/log').getLogger(__filename);
 var utils = require('../util/utils');
-var connectionService = require('../../../lib/common/service/connectionService');
 
-var onlineUser = function(consoleService) {
-	this.consoleService = consoleService;
+var Module = function(app, opts) {
+	this.app = app;
+	this.type = opts.type || 'pull';
+	this.interval = opts.interval || 30;
 };
 
-module.exports = onlineUser;
-var moduleId = "onlineUser";
+Module.moduleId = 'onlineUser';
 
-var pro = onlineUser.prototype;
- 
-pro.monitorHandler = function(agent,msg, cb) {
-	//collect data
-	var self = this;
-	var serverId = self.consoleService.id;
-	utils.invokeCallback(cb,null,{serverId:serverId,body:connectionService.getStatisticsInfo()});
-};
+var pro = Module.prototype;
 
-pro.masterHandler = function(agent,msg, cb) {
-	var body=msg.body;
-	this.consoleService.set("totalConnCount",(this.consoleService.get("totalConnCount") || 0)+body.totalConnCount);
-	this.consoleService.set("loginedCount",(this.consoleService.get("loginedCount") || 0)+body.loginedCount);
-    
-    var onlineUsers=body.loginedList;
-    for(var i=0;i<onlineUsers.length;i++){
-        //onlineUsers[i].serverId=body.serverId;
-        this.consoleService.set(monitorId,onlineUsers[i],body.serverId);
-        //this.consoleService.getCollect("onlineUserList").push(onlineUsers[i]);
-    }
-	if(msg&&msg.reqId){
-		utils.invokeCallback(cb,null,body);
+pro.monitorHandler = function(agent, msg) {
+	var connectionService = this.app.components.connection;
+	if(!connectionService) {
+		logger.error('not support connection.');
+		return;
 	}
+
+	agent.notify(Module.moduleId, 
+		{serverId: agent.id, body: connectionService.getStatisticsInfo()}
+	);
 };
 
-pro.clientHandler = function(agent,msg, cb) {
-	if(msg.monitorId != 'all'){
-		// request from client get data from monitor
-		agent.request(msg.monitorId,moduleId,msg,function(err,resp){
-			utils.invokeCallback(cb,err,resp);
-		});
-	}else{
-		// 这里的数据应该也是要从 monitor 中推送过来的
-		//agent.notifyAll(moduleId,msg);
-		utils.invokeCallback(cb,null,{totalConnCount:(this.consoleService.get("totalConnCount")||0),loginedCount:(this.consoleService.get("loginedCount")||0),onlineUserList:(this.consoleService.get("onlineUserList")||{})})
+pro.masterHandler = function(agent, msg) {
+	if(!msg) {
+		// pull interval callback
+		agent.notifyAll(Module.moduleId);
+		return;
 	}
+
+	var body = msg.body;
+	var data = agent.get(Module.moduleId);
+	if(!data) {
+		data = {};
+		agent.set(ModuleId.moduleId);
+	}
+
+	data[msg.id] = msg.body;
+};
+
+pro.clientHandler = function(agent, msg, cb) {
+	utils.invokeCallback(cb, null, agent.get(Module.moduleId));
+	/*
+	utils.invokeCallback(cb, null, {
+		totalConnCount: (this.consoleService.get("totalConnCount")||0), 
+		loginedCount:(this.consoleService.get("loginedCount")||0), 
+		onlineUserList:(this.consoleService.get("onlineUserList")||{})
+	});*/
 };

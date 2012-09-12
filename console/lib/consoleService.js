@@ -18,7 +18,7 @@ var schedule = require('pomelo-schedule');
 var ConsoleService = function(opts) {
 	EventEmitter.call(this);
 	this.port = opts.port;
-	this.nodes = {};
+	this.values = {};
 	this.master = opts.master;
 
 	this.modules = {};
@@ -124,32 +124,15 @@ pro.execute = function(moduleId, method, msg, cb) {
  * 设置状态信息
  */
 
-pro.set = function(moduleId,value,serverId) {
-	var nodes = this.nodes;
-	if(!nodes[moduleId]){
-		nodes[moduleId] = {};
-	}
-	if(serverId){
-		nodes[moduleId][serverId] = value;
-	}else{
-		nodes[moduleId] = value;
-	}
+pro.set = function(moduleId,value) {
+	this.values[moduleId] = value;
 };
 
 /**
  * 获取状态信息
  */
-pro.get = function(moduleId,serverId) {
-	var nodes = this.nodes;
-	if(!moduleId) {
-		throw new Error("moduleId is required");
-	}
-	if(serverId&&nodes[moduleId]&&nodes[moduleId][serverId]){
-		return nodes[moduleId][serverId];
-	}else if(nodes[moduleId]){
-		return nodes[moduleId];
-	}// if nodes[moduleId] undefined
-	// do it in the specific module
+pro.get = function(moduleId) {
+	return this.values[moduleId];
 };
 
 var registerRecord = function(service, moduleId, module) {

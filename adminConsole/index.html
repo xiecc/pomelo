@@ -15,12 +15,16 @@
 			//console.log(window);
 			var host = window.location.hostname;
 			var port = 3005;
-			var client = new consoleClient("web-client-1");
-			client.connect(host,port,function(){
-				client.request('systemInfo',{monitorId:"connector-server-1"},function(err,result){
-					console.log(result);
-				});
+			var client = window.client = new ConsoleClient();
+			client.connect(host, port, function(err){
+				if(err) {
+					console.error('fail to connect to admin console server:');
+					console.error(err);
+				} else {
+					console.info('admin console connected.');
+				}
 			});
+			console.log(window.client);
 		</script>
 	</body>	
 </html>
