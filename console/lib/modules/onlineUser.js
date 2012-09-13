@@ -8,22 +8,26 @@ var logger = require('../util/log/log').getLogger(__filename);
 var utils = require('../util/utils');
 
 var Module = function(app, opts) {
+	opts = opts || {};
 	this.app = app;
 	this.type = opts.type || 'pull';
-	this.interval = opts.interval || 30;
+	this.interval = opts.interval || 5;
 };
 
 Module.moduleId = 'onlineUser';
+
+module.exports = Module;
 
 var pro = Module.prototype;
 
 pro.monitorHandler = function(agent, msg) {
 	var connectionService = this.app.components.connection;
 	if(!connectionService) {
-		logger.error('not support connection.');
+		logger.error('not support connection: %j', agent.id);
 		return;
 	}
 
+	console.error('monitor online user: %j', connectionService.getStatisticsInfo());
 	agent.notify(Module.moduleId, 
 		{serverId: agent.id, body: connectionService.getStatisticsInfo()}
 	);
@@ -32,7 +36,7 @@ pro.monitorHandler = function(agent, msg) {
 pro.masterHandler = function(agent, msg) {
 	if(!msg) {
 		// pull interval callback
-		agent.notifyAll(Module.moduleId);
+		agent.notifyByType('connector', Module.moduleId);
 		return;
 	}
 
