@@ -154,7 +154,7 @@ function start() {
         }
 
         var mode = args.length === 0 ? 'development' : args[0];
-        var ls = spawn('node', ['app.js', 'env', mode]);
+        var ls = spawn('node', ['app.js', 'env='+mode]);
 
         //reserve the child process pid and start mode
         fs.writeFile(process.cwd() + '/tmp', mode+':'+ls.pid);
