@@ -4,16 +4,7 @@ var app = pomelo.createApp();
 
 app.set('name', '$');
 app.set('dirname', __dirname);
-
 app.defaultConfiguration();
-
-app.configure('production|development', function () {
-    if (app.serverType !== 'master') {
-        app.load(pomelo.remote, {cacheMsg:true, interval:RPC_FLUSH_INTERVAL});
-    }
-});
-
-app.loadDefaultComponents();
 
 app.start();
 
