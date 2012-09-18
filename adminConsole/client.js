@@ -29,7 +29,6 @@
 				msg = protocol.parse(msg);
 				var cb = self.callbacks[msg.respId];
 				delete self.callbacks[msg.respId];
-				console.log(cb);
 				if(cb && typeof cb === 'function') {
 					cb(msg.error, msg.body);
 				}

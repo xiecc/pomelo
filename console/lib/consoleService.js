@@ -100,20 +100,20 @@ pro.execute = function(moduleId, method, msg, cb) {
 	var m = this.modules[moduleId];
 	if(!m) {
 		console.error('unknown module: %j.', moduleId);
-		utils.invokeCallback(cb, new Error('unknown module:' + moduleId));
+		cb('unknown moduleId:' + moduleId);
 		return;
 	}
 
 	if(!m.enable) {
 		console.error('module %j is disable.', moduleId);
-		utils.invokeCallback(cb, new Error('module ' + moduleId + ' is disable'));
+		cb('module ' + moduleId + ' is disable');
 		return;
 	}
 
 	var module = m.module;
 	if(!module || typeof module[method] !== 'function') {
 		console.error('module %j dose not have a method called %j.', moduleId, method);
-		utils.invokeCallback(cb, new Error('module ' + moduleId + ' dose not have a method called ' + method));
+		cb('module ' + moduleId + ' dose not have a method called ' + method);
 		return;
 	}
 

@@ -221,13 +221,33 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 </body>
 <script type="text/javascript">
 var selectServer = document.getElementById('serverType');
+
+var list = function() {
+    window.parent.client.request('profiler', {action: 'list'}, function(err, msg) {
+        if(err) {
+            alert(err);
+            return;
+        }
+        selectServer.options.length = 0;
+        msg.sort(function(o1, o2) {
+            return o1.localeCompare(o2);
+        });
+        var i, l;
+        for (var i=0, l=msg.length; i<l; i++){
+            selectServer.add(new Option(msg[i], msg[i]));       
+        }
+    });
+};
+
 var loading = function(){
 	selectServer.remove(0);
+    list();
+    /*
 	socket.on('connect', function() {
 		socket.emit('announce_web_client');
 		socket.emit('webMessage', { method : 'getNodes'});
 		socket.on('getNodes', function(msg) {
-      selectServer.options.length = 0;
+            selectServer.options.length = 0;
 			for (var index = 0;index<msg.serverArray.length;index++){
 				var server = msg.serverArray[index];
 				var option = new Option(server.name,server.serverId);
@@ -235,6 +255,7 @@ var loading = function(){
 			}
 		});
 	});
+     */
 };
 window.onload = loading;
 </script>

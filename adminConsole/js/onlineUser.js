@@ -68,16 +68,24 @@ setInterval(function() {
 		}
 
 		console.log(msg);
-		var totalConnCount = 0, loginedCount = 0, info;
+		var totalConnCount = 0, loginedCount = 0, info, list = [];
 		for(var sid in msg) {
 			info = msg[sid];
-
+			totalConnCount += msg[sid].totalConnCount;
+			loginedCount += msg[sid].loginedCount;
+			list.concat(msg[sid].loginedList);
 		}
+
+		contentUpdate(totalConnCount, loginedCount);
+
+		var store = Ext.getCmp('userGridId').getStore();
+		console.log(list);
+		store.loadData(list);
 	});
 }, STATUS_INTERVAL);
 
 function contentUpdate(totalConnCount, loginedCount){
-	document.getElementById("totalConnCount").innerHTML = otalConnCount;
+	document.getElementById("totalConnCount").innerHTML = totalConnCount;
 	document.getElementById("loginedCount").innerHTML = loginedCount;
 }
 	

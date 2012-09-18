@@ -52,6 +52,6 @@ pro.masterHandler = function(agent, msg) {
 	data[msg.serverId] = oneData;
 };
 
-pro.clientHandler = function(agent,msg, cb) {
+pro.clientHandler = function(agent, msg, cb) {
 	utils.invokeCallback(cb, null, agent.get(Module.moduleId) || {});
 };

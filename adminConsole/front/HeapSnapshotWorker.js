@@ -42,4 +42,5 @@ function postMessageWrapper(message)
 }
 
 var dispatcher = new WebInspector.HeapSnapshotWorkerDispatcher(this, postMessageWrapper);
+debugger;
 addEventListener("message", dispatcher.dispatchMessage.bind(dispatcher), false);

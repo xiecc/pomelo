@@ -27,10 +27,7 @@ pro.monitorHandler = function(agent, msg) {
 		return;
 	}
 
-	console.error('monitor online user: %j', connectionService.getStatisticsInfo());
-	agent.notify(Module.moduleId, 
-		{serverId: agent.id, body: connectionService.getStatisticsInfo()}
-	);
+	agent.notify(Module.moduleId, connectionService.getStatisticsInfo());
 };
 
 pro.masterHandler = function(agent, msg) {
@@ -40,14 +37,13 @@ pro.masterHandler = function(agent, msg) {
 		return;
 	}
 
-	var body = msg.body;
 	var data = agent.get(Module.moduleId);
 	if(!data) {
 		data = {};
-		agent.set(ModuleId.moduleId);
+		agent.set(Module.moduleId, data);
 	}
 
-	data[msg.id] = msg.body;
+	data[msg.serverId] = msg;
 };
 
 pro.clientHandler = function(agent, msg, cb) {

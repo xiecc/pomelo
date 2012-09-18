@@ -14,7 +14,9 @@ Ext.onReady(function() {
 				id : 'systemInfo',
 				text : 'systemInfo',
 				leaf : true
-			}, {
+			}, 
+			/*
+			{
 				id : 'nodeInfo',
 				text : 'nodeInfo',
 				leaf : true
@@ -37,17 +39,20 @@ Ext.onReady(function() {
 					text : 'forRequest',
 					leaf : true
 				} ]
-			}, {
+			},
+			{
 				id : 'onlineUser',
 				text : 'onlineUser',
 				leaf : true
-			}, {
+			}, 
+			{
 				id : 'sceneInfo',
 				text : 'sceneInfo',
 				leaf : true
-			}, {
-				id : 'runScript',
-				text : 'runScript',
+			}, */
+			{
+				id : 'scripts',
+				text : 'scripts',
 				leaf : true
 			}, {
 				id : 'profiler',

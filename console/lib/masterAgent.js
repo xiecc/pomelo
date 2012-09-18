@@ -112,7 +112,6 @@ pro.listen = function(port) {
 
 		// message from client
 		socket.on('client', function(msg) {
-			console.log(msg);
 			if(!registered) {
 				// not register yet, ignore any message
 				return;

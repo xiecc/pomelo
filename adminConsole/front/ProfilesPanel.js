@@ -481,6 +481,7 @@ WebInspector.ProfilesPanel.prototype = {
 
     _finishHeapSnapshot: function(uid)
     {
+        debugger;
         var profile = this._profilesIdMap[this._makeKey(uid, WebInspector.DetailedHeapshotProfileType.TypeId)];
         if (!profile || !profile.proxy)
             return;
