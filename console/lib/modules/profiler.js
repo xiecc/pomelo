@@ -16,7 +16,7 @@ var Module = function(app, isMaster, agent) {
 	if(isMaster) {
 		this.proxy = new ProfileProxy(app.master.wsPort, this);
 		this.agent = agent;
-		this.proxy.listen();
+		//this.proxy.listen();
 	}
 };
 
@@ -30,49 +30,39 @@ pro.monitorHandler = function(agent, msg, cb) {
 	if (type === 'CPU') {
 		if (action === 'start') {
 			profiler.startProfiling();
-			cb();
+			//cb();
 		} else {
 			result = profiler.stopProfiling();
 			var res = {};
 			res.head = result.getTopDownRoot();
 			res.bottomUpHead = result.getBottomUpRoot();
 			res.msg = msg;
-			cb(null, res);
+			//cb(null, res);
+			agent.notify(Module.moduleId, {clientId: msg.clientId, type: type, body: res});
 			//monitorAgent.socket.emit('cpuprofiler', res);
 		}
 	} else {
 		var snapshot = profiler.takeSnapshot();
 		var name = process.cwd() + '/logs/' + utils.format(new Date()) + '.log';
 		var log = fs.createWriteStream(name, {'flags': 'a'});
-		var data = [];
+		var data;
 		snapshot.serialize({
 			onData: function (chunk, size) {
 				chunk = chunk + '';
-				log.write(chunk);
-				//monitorAgent.socket.emit('heapprofiler', {
-				//    method:'Profiler.addHeapSnapshotChunk',
-				//    params:{
-				//        uid:uid,
-				//        chunk:chunk
-				//    }
-				//});
-				data.push({
+				
+				data = {
 				    method:'Profiler.addHeapSnapshotChunk',
 				    params:{
-				        uid:uid,
-				        chunk:chunk
+				        uid: uid,
+				        chunk: chunk
 				    }
-				});
+				};
+				log.write(chunk);
+				agent.notify(Module.moduleId, {clientId: msg.clientId, type: type, body: data});
 			},
 			onEnd: function () {
-				/*
-				monitorAgent.socket.emit('heapprofiler', {
-					method:'Profiler.finishHeapSnapshot',
-					params:{
-						uid:uid
-					}
-				});*/
-				cb(null, data);
+				//cb(null, data);
+				agent.notify(Module.moduleId, {clientId: msg.clientId, type: type, body: {params: {uid: uid}}});
 				profiler.deleteAllSnapshots();
 			}
 		});
@@ -80,6 +70,11 @@ pro.monitorHandler = function(agent, msg, cb) {
 };
 
 pro.masterHandler = function(agent, msg, cb) {
+	if(msg.type === 'CPU') {
+		this.proxy.stopCallBack(msg.body, msg.clientId, agent);
+	} else {
+		this.proxy.takeSnapCallBack(msg.body);
+	}
 };
 
 pro.clientHandler = function(agent, msg, cb) {
@@ -88,6 +83,7 @@ pro.clientHandler = function(agent, msg, cb) {
 		return;
 	}
 
+	/*
 	agent.request(msg.uid, Module.moduleId, msg, function(err, res) {
 		if(err) {
 			logger.error('fail to profile %j for %j', msg.type, msg.uid);
@@ -96,7 +92,22 @@ pro.clientHandler = function(agent, msg, cb) {
 		}
 
 		cb(null, res);
-	});
+	});*/
+
+	if(typeof msg === 'string') {
+		msg = JSON.parse(msg);
+	}
+	var id = msg.id;
+	var command = msg.method.split('.');
+	var method = command[1];
+	var params = msg.params;
+	var clientId = msg.clientId;
+
+	if (!this.proxy[method] || typeof this.proxy[method] !== 'function') {
+		return;
+	}
+
+	this.proxy[method](id, params, clientId, agent);
 };
 
 var list = function(agent, msg, cb) {

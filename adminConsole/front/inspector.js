@@ -349,11 +349,14 @@ WebInspector.Events = {
 WebInspector.loaded = function()
 {
     InspectorBackend.loadFromJSONIfNeeded();
+    /*
     if ("page" in WebInspector.queryParamsObject) {
         var page = WebInspector.queryParamsObject.page;
         var host = "host" in WebInspector.queryParamsObject ? WebInspector.queryParamsObject.host : window.location.host;
         WebInspector.socket = new WebSocket("ws://" + host + "/devtools/page/" + page);
-        WebInspector.socket.onmessage = function(message) { InspectorBackend.dispatch(message.data); }
+        WebInspector.socket.onmessage = function(message) { 
+            InspectorBackend.dispatch(message.data); 
+        }
         WebInspector.socket.onerror = function(error) { console.error(error); }
         WebInspector.socket.onopen = function() {
             InspectorFrontendHost.sendMessageToBackend = WebInspector.socket.send.bind(WebInspector.socket);
@@ -361,6 +364,14 @@ WebInspector.loaded = function()
         }
         return;
     }
+     */
+    window.parent.client.on('profiler', function(message) {
+        InspectorBackend.dispatch(message.body); 
+    });
+
+    InspectorFrontendHost.sendMessageToBackend = function(message) {
+        window.parent.client.notify('profiler', message);
+    };
     WebInspector.doLoadedDone();
 }
 

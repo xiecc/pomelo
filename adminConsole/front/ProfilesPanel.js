@@ -466,7 +466,7 @@ WebInspector.ProfilesPanel.prototype = {
             profile.sidebarElement.subtitle = WebInspector.UIString("Loading\u2026");
             profile.sidebarElement.wait = true;
             
-            ProfilerAgent.getProfile(profile.typeId,selectServer.value );
+            ProfilerAgent.getProfile(profile.typeId, selectServer.value);
            // ProfilerAgent.getProfile(profile.typeId, profile.uid);
         }
     },
@@ -481,7 +481,6 @@ WebInspector.ProfilesPanel.prototype = {
 
     _finishHeapSnapshot: function(uid)
     {
-        debugger;
         var profile = this._profilesIdMap[this._makeKey(uid, WebInspector.DetailedHeapshotProfileType.TypeId)];
         if (!profile || !profile.proxy)
             return;

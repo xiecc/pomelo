@@ -145,8 +145,9 @@ InspectorBackendClass.prototype = {
 
     sendMessageObjectToBackend: function(messageObject)
     {
-        var message = JSON.stringify(messageObject);
-        InspectorFrontendHost.sendMessageToBackend(message);
+        //var message = JSON.stringify(messageObject);
+        //InspectorFrontendHost.sendMessageToBackend(message);
+        InspectorFrontendHost.sendMessageToBackend(messageObject);
     },
 
     registerDomainDispatcher: function(domain, dispatcher)

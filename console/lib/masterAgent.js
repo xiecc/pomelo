@@ -14,6 +14,7 @@ var MasterAgent = function(consoleService) {
 	this.server = null;
 	this.idMap = {};
 	this.typeMap = {};
+	this.clients = {};
 	this.reqId = 1;
 	this.callbacks = {};
 	this.state = ST_INITED;
@@ -49,9 +50,19 @@ pro.listen = function(port) {
 			if(msg && msg.type) {
 				if(msg.type === 'client') {
 					// client connection not join the map
+					if(!msg.id) {
+						// client should has a client id
+						return;
+					}
+					if(self.clients[msg.id]) {
+						socket.emit('register', {code: protocol.PRO_FAIL, msg: 'id has been registered. id:' + msg.id});
+						return;
+					}
+					addConnection(self, msg.id, msg.type, socket);
+					id = msg.id;
 					type = msg.type;
 					registered = true;
-					console.log('client connected to master');
+					socket.emit('register', {code: protocol.PRO_OK, msg: 'ok'});
 					return;
 				}
 
@@ -214,36 +225,61 @@ pro.notifyAll = function(moduleId, msg) {
 	return true;
 };
 
+pro.notifyClient = function(clientId, moduleId, msg) {
+	if(this.state > ST_STARTED) {
+		return;
+	}
+
+	var record = this.clients[clientId];
+	if(!record) {
+		console.error('fail to notifyClient for unknown client id:' + clientId);
+		return false;
+	}
+	sendToClient(record.socket, null, moduleId, msg);
+};
+
 var addConnection = function(agent, id, type, socket) {
 	var record = {
 		id: id, 
 		type: type, 
 		socket: socket
 	};
-	agent.idMap[id] = record;
-	var list = agent.typeMap[type] = agent.typeMap[type] || [];
-	list.push(record);
+	if(type === 'client') {
+		agent.clients[id] = record;
+	} else {
+		agent.idMap[id] = record;
+		var list = agent.typeMap[type] = agent.typeMap[type] || [];
+		list.push(record);
+	}
 	return record;
 };
 
 var removeConnection = function(agent, id, type) {
-	delete agent.idMap[id];
-	var list = agent.typeMap[type];
-	if(list) {
-		for(var i=0, l=list.length; i<l; i++) {
-			if(list[i].id === id) {
-				list.slice(i, 1);
-				break;
+	if(type === 'client') {
+		delete agent.clients[id];
+	} else {
+		delete agent.idMap[id];
+		var list = agent.typeMap[type];
+		if(list) {
+			for(var i=0, l=list.length; i<l; i++) {
+				if(list[i].id === id) {
+					list.slice(i, 1);
+					break;
+				}
 			}
-		}
-		if(list.length === 0) {
-			delete agent.typeMap[type];
+			if(list.length === 0) {
+				delete agent.typeMap[type];
+			}
 		}
 	}
 };
 
 var sendToMonitor = function(socket, reqId, moduleId, msg) {
 	socket.emit('monitor', protocol.composeRequest(reqId, moduleId, msg));
+};
+
+var sendToClient = function(socket, reqId, moduleId, msg) {
+	socket.emit('client', protocol.composeRequest(reqId, moduleId, msg));
 };
 
 var broadcastMonitors = function(records, moduleId, msg) {

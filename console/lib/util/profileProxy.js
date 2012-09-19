@@ -1,5 +1,4 @@
 var fs = require('fs');
-var WebSocketServer = require('ws').Server;
 
 var HeapProfileType = 'HEAP';
 var CPUProfileType = 'CPU';
@@ -22,70 +21,32 @@ module.exports = Proxy;
 
 var pro = Proxy.prototype;
 
-pro.listen = function() {
-	this.wss = new WebSocketServer({
-		port: this.port,
-		host: host
-	});
-
-	var self = this;
-	this.wss.on('connection', function(socket) {
-		socket.on('message', function(message) {
-			try {
-				message = JSON.parse(message);
-			} catch (e) {
-				console.log(e);
-				return;
-			}
-
-			var id = message.id;
-			var command = message.method.split('.');
-			var method = command[1];
-			var params = message.params;
-
-			if (!self[method] || typeof self[method] !== 'function') {
-				return;
-			}
-
-			self.setSocket(socket);
-			self[method](id, params);
-		});
-	});
-};
-
-pro.close = function() {
-	this.wss.close();
-};
-
-pro.enable = function(id, params) {
+pro.enable = function(id, params, clientId, agent) {
 	this.sendResult(id,{
 		result : true
-	});
+	}, clientId, agent);
 };
 
-pro.causesRecompilation = function(id, params) {
+pro.causesRecompilation = function(id, params, clientId, agent) {
 	this.sendResult(id,{
 		result: false
-	});
+	}, clientId, agent);
 };
 
-pro.isSampling = function(id, params) {
-	var self = this;
-	self.sendResult(id,{
+pro.isSampling = function(id, params, clientId, agent) {
+	this.sendResult(id,{
 		result: true
-	});
+	}, clientId, agent);
 };
 
-pro.hasHeapProfiler = function(id, params) {
-	var self = this;
-	self.sendResult(id,{
+pro.hasHeapProfiler = function(id, params, clientId, agent) {
+	this.sendResult(id,{
 		result: true
-	});
+	}, clientId, agent);
 };
 
-pro.getProfileHeaders = function(id, params) {
+pro.getProfileHeaders = function(id, params, clientId, agent) {
 	var headers = [];
-	var self = this;
 	for (var type in this.profiles) {
 		for (var profileId in this.profiles[type]) {
 			var profile = this.profiles[type][profileId];
@@ -96,42 +57,26 @@ pro.getProfileHeaders = function(id, params) {
 			});
 		}
 	}
-	self.sendResult(id, {
+	this.sendResult(id, {
 		headers: headers
-	});
+	}, clientId, agent);
 };
 
-pro.takeHeapSnapshot = function(id, params) {
+pro.takeHeapSnapshot = function(id, params, clientId, agent) {
 	var uid = params.uid;
-	var self = this;
 
-	/*
-	var server = require('./server').serverAgent;
-	var node = server.nodes[uid];
-	
-	if (!node) {
-		return;
-	}
-	node.socket.emit('profiler', { type: 'heap', action: 'start', uid: uid });*/
+	agent.notifyById(uid, 'profiler', {type: 'heap', action: 'start', uid: uid, clientId: clientId});
 
-	this.profile.clientHandler(this.profile.agent, {type: 'heap', action: 'start', uid: uid}, function(err, res) {
-		for(var i=0, l=res.length; i<l; i++) {
-			self.takeSnapCallBack(res[i]);
-		}
-		self.takeSnapCallBack({params: {uid: uid}});
-	});
-
-	self.sendEvent({method: 'Profiler.addProfileHeader', params: {header: {title: uid, uid: uid, typeId: HeapProfileType}}});
-	self.sendResult(id, {});
+	this.sendEvent({
+		method: 'Profiler.addProfileHeader', 
+		params: {header: {title: uid, uid: uid, typeId: HeapProfileType}}
+	}, clientId, agent);
+	this.sendResult(id, {}, clientId, agent);
 };
 
 pro.takeSnapCallBack = function (data) {
-	var self = this;
-	if(!data.params) {
-		console.error(data);
-	}
 	var uid = data.params.uid || 0;
-	var snapShot = self.profiles[HeapProfileType][uid];
+	var snapShot = this.profiles[HeapProfileType][uid];
 	if (!snapShot || snapShot.finish) {
 		snapShot = {};
 		snapShot.data = [];
@@ -145,10 +90,10 @@ pro.takeSnapCallBack = function (data) {
 	} else {
 		snapShot.finish = true;
 	}
-	self.profiles[HeapProfileType][uid] = snapShot;
+	this.profiles[HeapProfileType][uid] = snapShot;
 };
 
-pro.getProfile = function(id, params) {
+pro.getProfile = function(id, params, clientId, agent) {
 	var profile = this.profiles[params.type][params.uid];
 	var self = this;
 	if (!profile || !profile.finish) {
@@ -156,29 +101,27 @@ pro.getProfile = function(id, params) {
 			profile = self.profiles[params.type][params.uid];
 			if (!!profile) {
 				clearInterval(timerId);
-				self.asyncGet(id, params, profile);
+				self.asyncGet(id, params, profile, clientId, agent);
 			} else {
 				console.error('please wait ..............');
 			}
 		}, 5000);
 	} else {
-		self.asyncGet(id,params, profile);
+		this.asyncGet(id,params, profile, clientId, agent);
 	}
 };
 
-pro.asyncGet = function(id, params, snapshot) {
+pro.asyncGet = function(id, params, snapshot, clientId, agent) {
 	var uid = params.uid;
-	var self = this;
 	if (params.type === HeapProfileType) {
 		for (var index in snapshot.data) {
 			var chunk = snapshot.data[index];
-			self.sendEvent({method: 'Profiler.addHeapSnapshotChunk', params: {uid: uid, chunk: chunk}});
+			this.sendEvent({method: 'Profiler.addHeapSnapshotChunk', params: {uid: uid, chunk: chunk}}, clientId, agent);
 		}
-		self.sendEvent({method: 'Profiler.finishHeapSnapshot', params: {uid: uid}});
-		self.sendResult(id, {profile: {title: snapshot.title, uid: uid, typeId: HeapProfileType}});
-		console.log('finished~~~~~~~~~~~~~~~~~~~`heap');
+		this.sendEvent({method: 'Profiler.finishHeapSnapshot', params: {uid: uid}}, clientId, agent);
+		this.sendResult(id, {profile: {title: snapshot.title, uid: uid, typeId: HeapProfileType}}, clientId, agent);
 	} else if (params.type === CPUProfileType) {
-		self.sendResult(id,{
+		this.sendResult(id,{
 			profile: {
 				title: snapshot.title,
 				uid: uid,
@@ -186,7 +129,7 @@ pro.asyncGet = function(id, params, snapshot) {
 				head: snapshot.data.head,
 				bottomUpHead: snapshot.data.bottomUpHead
 			}
-		});
+		}, clientId, agent);
 	}
 };
 
@@ -197,63 +140,31 @@ pro.clearProfiles = function(id, params) {
 	//profiler.deleteAllProfiles();
 };
 
-pro.setSocket = function(socket){
-	this.socket = socket;
+pro.sendResult = function(id, res, clientId, agent){
+	agent.notifyClient(clientId, 'profiler', JSON.stringify({id: id, result: res}));
 };
 
-pro.sendResult = function(id, res){
-	if (!!this.socket) {
-		this.socket.send(JSON.stringify({id: id, result: res}));
-	}
+pro.sendEvent = function(res, clientId, agent){
+	agent.notifyClient(clientId, 'profiler', JSON.stringify(res));
 };
 
-
-pro.sendEvent = function(res){
-	if (!!this.socket) {
-		this.socket.send(JSON.stringify(res));
-	}
-};
-
-pro.start = function(id, params) {
+pro.start = function(id, params, clientId, agent) {
 	var uid = params.uid;
-	var self = this;
-	/*
-	var server = require('./server').serverAgent;
-	var node = server.nodes[uid];
-	var self = this;
-	if (!!node) {
-		node.socket.emit('profiler', { type: 'CPU', action: 'start', uid: uid });
-		self.sendEvent({ method: 'Profiler.setRecordingProfile', params: { isProfiling: true } });
-	}
-	*/
 
-	this.profile.clientHandler(this.profile.agent, {type: 'CPU', action: 'start', uid: uid}, function(err, res) {
-		self.sendEvent({method: 'Profiler.setRecordingProfile', params: {isProfiling: true}});
-		self.sendResult(id, {});
-	});
-	//self.sendResult(id,{});
+	agent.notifyById(uid, 'profiler', {type: 'CPU', action: 'start', uid: uid, clientId: clientId});
+	this.sendEvent({method: 'Profiler.setRecordingProfile', params: {isProfiling: true}}, clientId, agent);
+	this.sendResult(id, {}, clientId, agent);
 };
 
-pro.stop = function(id, params) {
+pro.stop = function(id, params, clientId, agent) {
 	var uid = params.uid;
-	var self = this;
-	/*
-	var server = require('./server').serverAgent;
-	var node = server.nodes[uid];
-	if (!node) {
-		return;
-	}
-	node.socket.emit('profiler', { type: 'CPU', action: 'stop', uid: uid });
-	 */
-	this.profile.clientHandler(this.profile.agent, {type: 'CPU', action: 'stop', uid: uid}, function(err, res) {
-		self.stopCallBack(res);
-	});
+	agent.notifyById(uid, 'profiler', {type: 'CPU', action: 'stop', uid: uid, clientId: clientId});
+	this.sendResult(id, {}, clientId, agent);
 };
 
-pro.stopCallBack = function(res) {
-	var self = this;
+pro.stopCallBack = function(res, clientId, agent) {
 	var uid = res.msg.uid;
-	var profiler = self.profiles[CPUProfileType][uid];
+	var profiler = this.profiles[CPUProfileType][uid];
 	if (!profiler || profiler.finish){
 		profiler = {};
 		profiler.data = null;
@@ -263,6 +174,9 @@ pro.stopCallBack = function(res) {
 		profiler.title = uid;
 	}
 	profiler.data = res;
-	self.profiles[CPUProfileType][uid] = profiler;
-	self.sendEvent({method: 'Profiler.addProfileHeader', params: {header: {title: profiler.title, uid: uid, typeId: CPUProfileType}}});
+	this.profiles[CPUProfileType][uid] = profiler;
+	this.sendEvent({
+		method: 'Profiler.addProfileHeader', 
+		params: {header: {title: profiler.title, uid: uid, typeId: CPUProfileType}}
+	}, clientId, agent);
 };

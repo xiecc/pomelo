@@ -100,6 +100,8 @@ pro.execute = function(moduleId, method, msg, cb) {
 	var m = this.modules[moduleId];
 	if(!m) {
 		console.error('unknown module: %j.', moduleId);
+		console.error('msg: %j', msg);
+		console.trace();
 		cb('unknown moduleId:' + moduleId);
 		return;
 	}

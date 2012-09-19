@@ -14,23 +14,38 @@
 	};
 
 	Client.prototype = {
-		connect: function(host, port, cb){
+		connect: function(id, host, port, cb){
+			this.id = id;
 			var self = this;
 			this.socket = io.connect('http://' + host + ':' + port);
 
 			this.socket.on('connect', function(){
 				self.state = Client.ST_CONNECTED;
-				self.socket.emit('register', {type: "client"});
+				self.socket.emit('register', {type: "client", id: id});
+			});
+
+			this.socket.on('register', function(res) {
+				if(res.code !== protocol.PRO_OK) {
+					cb(res.msg);
+					return;
+				}
+
 				self.state = Client.ST_REGISTERED;
 				cb();
 			});
 
 			this.socket.on('client', function(msg) {
 				msg = protocol.parse(msg);
-				var cb = self.callbacks[msg.respId];
-				delete self.callbacks[msg.respId];
-				if(cb && typeof cb === 'function') {
-					cb(msg.error, msg.body);
+				if(msg.respId) {
+					// response for request
+					var cb = self.callbacks[msg.respId];
+					delete self.callbacks[msg.respId];
+					if(cb && typeof cb === 'function') {
+						cb(msg.error, msg.body);
+					}
+				} else if(msg.moduleId) {
+					// notify
+					self.emit(msg.moduleId, msg);
 				}
 			});
 
@@ -47,6 +62,13 @@
 			var id = this.reqId++;
 			var req = protocol.composeRequest(id, moduleId, msg);
 			this.callbacks[id] = cb;
+			this.socket.emit('client', req);
+		}, 
+
+		notify: function(moduleId, msg) {
+			// something dirty: attach current client id into msg
+			msg.clientId = this.id;
+			var req = protocol.composeRequest(null, moduleId, msg);
 			this.socket.emit('client', req);
 		}, 
 

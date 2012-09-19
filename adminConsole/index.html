@@ -16,10 +16,11 @@
 			var host = window.location.hostname;
 			var port = 3005;
 			var client = window.client = new ConsoleClient();
-			client.connect(host, port, function(err){
+			client.connect('chang', host, port, function(err){
 				if(err) {
 					console.error('fail to connect to admin console server:');
 					console.error(err);
+					alert(err);
 				} else {
 					console.info('admin console connected.');
 				}

@@ -59,6 +59,9 @@
 		}
 	}
 
+	protocol.PRO_OK = 1;
+	protocol.PRO_FAIL = -1;
+
 	window.protocol = new protocol();
 })(window);
 
