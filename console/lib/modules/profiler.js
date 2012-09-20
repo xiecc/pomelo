@@ -6,17 +6,9 @@ var fs = require('fs');
 var ProfileProxy = require('../util/profileProxy');
 
 var Module = function(app, isMaster, agent) {
-	this.profiles = {
-		HEAP: {},
-		CPU: {}
-	};
-
-	this.isProfilingCPU = false;
-
 	if(isMaster) {
-		this.proxy = new ProfileProxy(app.master.wsPort, this);
+		this.proxy = new ProfileProxy();
 		this.agent = agent;
-		//this.proxy.listen();
 	}
 };
 
@@ -30,16 +22,13 @@ pro.monitorHandler = function(agent, msg, cb) {
 	if (type === 'CPU') {
 		if (action === 'start') {
 			profiler.startProfiling();
-			//cb();
 		} else {
 			result = profiler.stopProfiling();
 			var res = {};
 			res.head = result.getTopDownRoot();
 			res.bottomUpHead = result.getBottomUpRoot();
 			res.msg = msg;
-			//cb(null, res);
 			agent.notify(Module.moduleId, {clientId: msg.clientId, type: type, body: res});
-			//monitorAgent.socket.emit('cpuprofiler', res);
 		}
 	} else {
 		var snapshot = profiler.takeSnapshot();
@@ -51,17 +40,16 @@ pro.monitorHandler = function(agent, msg, cb) {
 				chunk = chunk + '';
 				
 				data = {
-				    method:'Profiler.addHeapSnapshotChunk',
-				    params:{
-				        uid: uid,
-				        chunk: chunk
-				    }
+					method:'Profiler.addHeapSnapshotChunk',
+					params:{
+						uid: uid,
+						chunk: chunk
+					}
 				};
 				log.write(chunk);
 				agent.notify(Module.moduleId, {clientId: msg.clientId, type: type, body: data});
 			},
 			onEnd: function () {
-				//cb(null, data);
 				agent.notify(Module.moduleId, {clientId: msg.clientId, type: type, body: {params: {uid: uid}}});
 				profiler.deleteAllSnapshots();
 			}
@@ -82,17 +70,6 @@ pro.clientHandler = function(agent, msg, cb) {
 		list(agent, msg, cb);
 		return;
 	}
-
-	/*
-	agent.request(msg.uid, Module.moduleId, msg, function(err, res) {
-		if(err) {
-			logger.error('fail to profile %j for %j', msg.type, msg.uid);
-			cb(err.msg);
-			return;
-		}
-
-		cb(null, res);
-	});*/
 
 	if(typeof msg === 'string') {
 		msg = JSON.parse(msg);

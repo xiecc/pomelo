@@ -3,12 +3,7 @@ var fs = require('fs');
 var HeapProfileType = 'HEAP';
 var CPUProfileType = 'CPU';
 
-var host = '0.0.0.0';
-
-var Proxy = function(port, profile){
-	this.port = port;
-	this.profile = profile;
-
+var Proxy = function(){
 	this.profiles = {
 		HEAP: {},
 		CPU: {}

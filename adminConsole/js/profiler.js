@@ -88,24 +88,6 @@ Ext.onReady(function() {
 	});
 });
 
-/*
-socket.on('connect', function() {
-	socket.emit('announce_web_client');
-	socket.emit('webMessage', {
-		method : 'getSer_Scr'
-	});
-
-	socket.on('getSer_Scr', function(msg) {
-		Ext.getCmp('serverComId').getStore().loadData(msg.serverArray);
-		Ext.getCmp('scriptComId').getStore().loadData([ {
-			"type" : 'cpu'
-		}, {
-			"type" : 'heap'
-		} ]);
-	});
-});
- */
-
 function startProf() {
 	var scriptJs = Ext.getCmp('scriptComId').getValue();
 	var serverId = Ext.getCmp('serverComId').getValue();
@@ -128,7 +110,6 @@ function startProf() {
 	});
 }
 
-// run the cript
 function stopProf() {
 	var scriptJs = Ext.getCmp('scriptComId').getValue();
 	var serverId = Ext.getCmp('serverComId').getValue();

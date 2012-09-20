@@ -169,6 +169,14 @@ var list = function() {
 			scripts.push({name: item, script: item});
 		}
 
+		servers.sort(function(o1, o2) {
+			return o1.name.localeCompare(o2);
+		});
+
+		scripts.sort(function(o1, o2) {
+			return o1.name.localeCompare(o2);
+		});
+
 		Ext.getCmp('serverComId').getStore().loadData(servers);
 		Ext.getCmp('scriptComId').getStore().loadData(scripts);
 	});
