@@ -19,7 +19,8 @@
         "crc":">=0.0.1",
         "pomelo-loader":">=0.0.4",
         "pomelo-rpc":">=0.0.7",
-        "pomelo-protocol":">=0.0.3"
+        "pomelo-protocol":">=0.0.3", 
+        "pomelo-admin":">=0.0.1"
     },
     "bin":{
         "pomelo":"./bin/pomelo"
