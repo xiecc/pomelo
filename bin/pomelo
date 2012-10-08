@@ -16,7 +16,7 @@ var args = process.argv.slice(2);
 var TIME_INIT = 1000;
 var TIME_KILL_WAIT = 6000;
 var TIME_STOP_WAIT = 10000;
-var TMP_FILE = process.cwd() + '/.tmp';
+var TMP_FILE = process.cwd() + '/logs/tmp';
 
 /**
  * Usage documentation.
