@@ -6,6 +6,7 @@ app.set('name', '$');
 app.set('dirname', __dirname);
 
 app.enable('proxy');
+
 app.defaultConfiguration();
 
 app.start();
