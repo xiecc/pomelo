@@ -7,7 +7,9 @@ var fs = require('fs')
     cp = require('child_process'),
     client = require('socket.io-client'),
     exec = cp.exec,
-    spawn = cp.spawn;
+    spawn = cp.spawn,
+    adminClient = require('../lib/client/client'),
+    util = require('util');
 
 /**
  *  Common Variables
@@ -16,7 +18,7 @@ var args = process.argv.slice(2);
 var TIME_INIT = 1000;
 var TIME_KILL_WAIT = 6000;
 var TIME_STOP_WAIT = 10000;
-var TMP_FILE = process.cwd() + '/.tmp';
+var TMP_FILE = process.cwd() + '/tmp';
 
 /**
  * Usage documentation.
@@ -167,8 +169,10 @@ function start() {
             console.log(data.toString());
         });
         ls.on('exit', function (code) {
-            console.error('start project failed,exited with code ' + code);
-						fs.unlinkSync(TMP_FILE);
+            if(code != 11){
+                //console.error('start project failed,exited with code ' + code);
+                //fs.unlinkSync(TMP_FILE);
+            }
         });
     }
     else {
@@ -181,16 +185,28 @@ function start() {
  *
  */
 function list() {
+
      if (fs.existsSync(TMP_FILE)) {
         fs.readFile(TMP_FILE, function (err, data) {
             if (err) throw err;
-            var socket = client.connect(getAddress(data.toString().split(':')[0]));
-            socket.on('connect', function () {
-                socket.emit('list', Date.now());
-                socket.on('info', function (data) {
-                    console.log(data.info);
-                    process.exit(1);
-                });
+            var _client = new adminClient();
+            var file = require(process.cwd()+"/config/master.json");
+            var config = file[data.toString().split(':')[0]];
+            _client.connect('fantasyni',config.host,config.port,function(err){
+                if(err) {
+                    console.error('fail to connect to admin console server:');
+                    console.error(err);
+                } else {
+                    _client.request('nodeInfo', null, function(err, msg) {
+                        if(err) {
+                          console.error('fail to request node info:');
+                          console.error(err);
+                          return;
+                        }
+                        console.log(util.inspect(msg,true,null));
+                        process.exit(1);
+                    });
+                }
             });
         });
     }
@@ -214,28 +230,41 @@ function terminal(signal) {
             }
             else {
                fs.readFile(TMP_FILE, function (err, data) {
-                  var socket = client.connect(getAddress(data.toString().split(':')[0]));
                     if (err) throw err;
+                    var _client = new adminClient();
+                    var file = require(process.cwd()+"/config/master.json");
+                    var config = file[data.toString().split(':')[0]];
                     console.log("closing the program......\nplease wait......");
-                    if (signal === 'kill') {
-                        socket.on('connect', function () {
-                            socket.emit('kill', Date.now());
-                        });
-                        setTimeout(function () {
-                            exec('kill -9 ' + data.toString().split(':')[1]);
-                            fs.unlinkSync(TMP_FILE);
-                            process.exit(1);
-                        }, TIME_KILL_WAIT);
-                    }
-                    else {
-                        socket.on('connect', function () {
-                            socket.emit('stop', Date.now());
-                        });
-                        setTimeout(function () {
-                          fs.unlinkSync(TMP_FILE);
-                          process.exit(1);
-                        }, TIME_STOP_WAIT);
-                    }
+                    
+                    _client.connect('fantasyni',config.host,config.port,function(err){
+                            if(err) throw err;
+                            _client.request('nodeInfo',null,function(err,msg){
+                                var _pid = [];
+                                var _serverId = [];
+                                for(var id in msg){
+                                    _pid.push(msg[id]['pid']);
+                                    _serverId.push(msg[id]['serverId']);
+                                }
+                                _client.request('serverStop', {signal:signal,pid:_pid,serverId:_serverId}, function(err, msg) {
+                                    if(err) throw err;
+                                    if (signal === 'kill') {
+                                        setTimeout(function () {
+                                            exec('kill -9 ' + data.toString().split(':')[1]);
+                                            fs.unlinkSync(TMP_FILE);
+                                            console.log(util.inspect(msg,true,null));
+                                            process.exit(1);
+                                        }, TIME_KILL_WAIT);
+                                    }
+                                    else {
+                                        setTimeout(function () {
+                                          fs.unlinkSync(TMP_FILE);
+                                          console.log(util.inspect(msg,true,null));
+                                          process.exit(1);
+                                        }, TIME_STOP_WAIT);
+                                    }
+                                });
+                            });
+                    });
                 });
             }
         });
