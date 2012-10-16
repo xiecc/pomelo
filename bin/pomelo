@@ -7,7 +7,9 @@ var fs = require('fs')
     cp = require('child_process'),
     client = require('socket.io-client'),
     exec = cp.exec,
-    spawn = cp.spawn;
+    spawn = cp.spawn,
+    adminClient = require('../lib/client/client'),
+    util = require('util');
 
 /**
  *  Common Variables
@@ -142,9 +144,34 @@ function createApplicationAt(path) {
  *
  */
 function start() {
-    if (args.length > 1 || (args.length == 1 && (args[0] !== 'development' && args[0] !== 'production'))) {
-        abort("The argument is error.");
-    }
+    var mode = "development";
+    var deamon = false;
+    switch(args.length) {
+      case 0:
+         break;
+      case 1:
+         if(args[0] == 'development' || args[0] == 'production')
+              mode = args[0];
+         else if(args[0] == '--deamon')
+              deamon = true;
+         else
+            abort("The argument is error.");
+         break;
+      case 2:
+         if(args[0] == 'development' || args[0] == 'production'){
+                mode = args[0];
+                if(args[1] == '--deamon')
+                     deamon = true;
+                else 
+                     abort("The argument is error.");
+         } 
+         else
+               abort("The argument is error.");
+         break;
+      default:
+           abort("The argument is error.");
+           break;
+  };
     if (fs.existsSync('./app.js')) {
         if (fs.existsSync(TMP_FILE)) {
             var ex = exec('ps -p ' + fs.readFileSync(TMP_FILE).toString().split(':')[1], function (error, stdout, stderr) {
@@ -153,22 +180,33 @@ function start() {
                 }
             });
         }
-
-        var mode = args.length === 0 ? 'development' : args[0];
-        var ls = spawn('node', ['app.js', 'env='+mode]);
-
+        mode = args.length === 0 ? 'development' : args[0];
+        var ls;
+        if(!deamon){
+            ls = spawn('node', ['app.js', 'env='+mode]);
+            ls.stdout.on('data', function (data) {
+            console.log(data.toString());
+               });
+            ls.stderr.on('data', function (data) {
+            console.log(data.toString());
+               });
+        }
+        else{
+             if(fs.existsSync('/usr/local/bin/forever')){
+                 ls = spawn('forever', ['start', 'app.js', 'env='+mode]);
+                 console.log("Stop the application use the command:pomelo stop");
+             }
+             else 
+                 abort("Please install forever use command: npm install forever -g.");
+        }
         //reserve the child process pid and start mode
         fs.writeFile(TMP_FILE, mode+':'+ls.pid);
 
-        ls.stdout.on('data', function (data) {
-            console.log(data.toString());
-        });
-        ls.stderr.on('data', function (data) {
-            console.log(data.toString());
-        });
         ls.on('exit', function (code) {
-            console.error('start project failed,exited with code ' + code);
-						fs.unlinkSync(TMP_FILE);
+            if(code != 11){
+                //console.error('start project failed,exited with code ' + code);
+                //fs.unlinkSync(TMP_FILE);
+            }
         });
     }
     else {
@@ -181,16 +219,28 @@ function start() {
  *
  */
 function list() {
+
      if (fs.existsSync(TMP_FILE)) {
         fs.readFile(TMP_FILE, function (err, data) {
             if (err) throw err;
-            var socket = client.connect(getAddress(data.toString().split(':')[0]));
-            socket.on('connect', function () {
-                socket.emit('list', Date.now());
-                socket.on('info', function (data) {
-                    console.log(data.info);
-                    process.exit(1);
-                });
+            var _client = new adminClient();
+            var file = require(process.cwd()+"/config/master.json");
+            var config = file[data.toString().split(':')[0]];
+            _client.connect('fantasyni',config.host,config.port,function(err){
+                if(err) {
+                    console.error('fail to connect to admin console server:');
+                    console.error(err);
+                } else {
+                    _client.request('nodeInfo', null, function(err, msg) {
+                        if(err) {
+                          console.error('fail to request node info:');
+                          console.error(err);
+                          return;
+                        }
+                        console.log(util.inspect(msg,true,null));
+                        process.exit(1);
+                    });
+                }
             });
         });
     }
@@ -214,28 +264,41 @@ function terminal(signal) {
             }
             else {
                fs.readFile(TMP_FILE, function (err, data) {
-                  var socket = client.connect(getAddress(data.toString().split(':')[0]));
                     if (err) throw err;
+                    var _client = new adminClient();
+                    var file = require(process.cwd()+"/config/master.json");
+                    var config = file[data.toString().split(':')[0]];
                     console.log("closing the program......\nplease wait......");
-                    if (signal === 'kill') {
-                        socket.on('connect', function () {
-                            socket.emit('kill', Date.now());
-                        });
-                        setTimeout(function () {
-                            exec('kill -9 ' + data.toString().split(':')[1]);
-                            fs.unlinkSync(TMP_FILE);
-                            process.exit(1);
-                        }, TIME_KILL_WAIT);
-                    }
-                    else {
-                        socket.on('connect', function () {
-                            socket.emit('stop', Date.now());
-                        });
-                        setTimeout(function () {
-                          fs.unlinkSync(TMP_FILE);
-                          process.exit(1);
-                        }, TIME_STOP_WAIT);
-                    }
+                    
+                    _client.connect('fantasyni',config.host,config.port,function(err){
+                            if(err) throw err;
+                            _client.request('nodeInfo',null,function(err,msg){
+                                var _pid = [];
+                                var _serverId = [];
+                                for(var id in msg){
+                                    _pid.push(msg[id]['pid']);
+                                    _serverId.push(msg[id]['serverId']);
+                                }
+                                _client.request('serverStop', {signal:signal,pid:_pid,serverId:_serverId}, function(err, msg) {
+                                    if(err) throw err;
+                                    if (signal === 'kill') {
+                                        setTimeout(function () {
+                                            exec('kill -9 ' + data.toString().split(':')[1]);
+                                            fs.unlinkSync(TMP_FILE);
+                                            console.log(util.inspect(msg,true,null));
+                                            process.exit(1);
+                                        }, TIME_KILL_WAIT);
+                                    }
+                                    else {
+                                        setTimeout(function () {
+                                          fs.unlinkSync(TMP_FILE);
+                                          console.log(util.inspect(msg,true,null));
+                                          process.exit(1);
+                                        }, TIME_STOP_WAIT);
+                                    }
+                                });
+                            });
+                    });
                 });
             }
         });
