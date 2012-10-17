@@ -9,16 +9,36 @@ var fs = require('fs')
     exec = cp.exec,
     spawn = cp.spawn,
     adminClient = require('../lib/client/client'),
+    utils = require('../lib/util/utils');
     util = require('util');
 
 /**
  *  Common Variables
  */
 var args = process.argv.slice(2);
+var DEAMON = false;
 var TIME_INIT = 1000;
 var TIME_KILL_WAIT = 6000;
 var TIME_STOP_WAIT = 10000;
-var TMP_FILE = process.cwd() + '/logs/tmp';
+var IF_WORKSPACE = fs.existsSync('./app.js')||fs.existsSync('game-server/app.js'); 
+var IF_HOME = utils.endsWith(process.cwd(),'game-server');
+var FOREVER = fs.existsSync('/usr/local/bin/forever');
+var TMP_FILE = IF_HOME ? process.cwd()+'/../logs/tmp' :  process.cwd()+ '/logs/tmp';
+var MASTER_JSON = IF_HOME ? require(process.cwd()+"/config/master.json"):require(process.cwd()+"/game-server/config/master.json");
+
+var DEV = "development";
+var PRD = "production";
+var DEM = "--deamon"
+var NOWORKSPACE_ERROR = "Please go to your pomelo project workspace to start the application.";
+var COMMAND_ERROR = "The command is error format.";
+var NORUNNING_ERROR = "There is no running program.";
+var INSTALLFOREVER_ERROR = "Please install forever use command: npm install forever -g.";
+var CONNECT_ERROR =  "Fail to connect to admin console server.";
+var NODEINFO_ERROR = "Fail to request node information.";
+var STOPSERVER_ERROR = "Fail to stop server.";
+var RUNDEAMON_INFO = "Application run in deamon.\nStop the application use the command:pomelo stop.";
+var CLOSEAPP_INFO = "Closing the application......\nPlease wait......"; 
+
 
 /**
  * Usage documentation.
@@ -81,7 +101,7 @@ var version = pkg.version;
             terminal('kill');
             break;
         default:
-            abort("The command is error format.");
+            abort(COMMAND_ERROR);
             break;
     }
 })();
@@ -144,73 +164,69 @@ function createApplicationAt(path) {
  *
  */
 function start() {
-    var mode = "development";
-    var deamon = false;
+    var mode = DEV;
     switch(args.length) {
       case 0:
          break;
       case 1:
-         if(args[0] == 'development' || args[0] == 'production')
+         if(args[0] == DEV || args[0] == PRD)
               mode = args[0];
-         else if(args[0] == '--deamon')
-              deamon = true;
+         else if(args[0] == DEM)
+              DEAMON = true;
          else
-            abort("The argument is error.");
+             abort(COMMAND_ERROR);
          break;
       case 2:
-         if(args[0] == 'development' || args[0] == 'production'){
+         if(args[0] == DEV || args[0] == PRD){
                 mode = args[0];
-                if(args[1] == '--deamon')
-                     deamon = true;
+                if(args[1] == DEM)
+                     DEAMON = true;
                 else 
-                     abort("The argument is error.");
+                     abort(COMMAND_ERROR);
          } 
          else
-               abort("The argument is error.");
+                abort(COMMAND_ERROR);
          break;
       default:
-           abort("The argument is error.");
+           abort(COMMAND_ERROR);
            break;
   };
-    if (fs.existsSync('./app.js')) {
-        if (fs.existsSync(TMP_FILE)) {
-            var ex = exec('ps -p ' + fs.readFileSync(TMP_FILE).toString().split(':')[1], function (error, stdout, stderr) {
-                if (stdout.length > 28) {
-                    abort("The program is still running,please stop it first.");
-                }
-            });
-        }
-        mode = args.length === 0 ? 'development' : args[0];
+    if (IF_WORKSPACE) {
         var ls;
-        if(!deamon){
-            ls = spawn('node', ['app.js', 'env='+mode]);
+        if(!DEAMON){
+            if(!IF_HOME){
+                var cmd = util.format('cd %s && node app.js env=','game-server');
+                    cmd += mode;
+                     ls = exec(cmd);
+            }
+            else
+                ls = spawn('node', ['app.js', 'env='+mode]);
             ls.stdout.on('data', function (data) {
-            console.log(data.toString());
+                    console.log(data.toString());
                });
             ls.stderr.on('data', function (data) {
-            console.log(data.toString());
+                    console.log(data.toString());
                });
         }
         else{
-             if(fs.existsSync('/usr/local/bin/forever')){
-                 ls = spawn('forever', ['start', 'app.js', 'env='+mode]);
-                 console.log("Stop the application use the command:pomelo stop");
+             if(FOREVER){
+                if(!IF_HOME){
+                    var cmd = util.format('cd %s && forever start app.js env=','game-server');
+                    cmd += mode;
+                    ls = exec(cmd);
+                 }
+                else
+                   ls = spawn('forever', ['start', 'app.js', 'env='+mode]);
+                console.info(RUNDEAMON_INFO);
              }
              else 
-                 abort("Please install forever use command: npm install forever -g.");
+                 abort(INSTALLFOREVER_ERROR);
         }
         //reserve the child process pid and start mode
-        fs.writeFile(TMP_FILE, mode+':'+ls.pid);
-
-        ls.on('exit', function (code) {
-            if(code != 11){
-                //console.error('start project failed,exited with code ' + code);
-                //fs.unlinkSync(TMP_FILE);
-            }
-        });
+        fs.writeFile(TMP_FILE, mode+':'+ls.pid+':'+DEAMON);
     }
     else {
-        abort("Please go to your pomelo workspace to start the program.");
+        abort(NOWORKSPACE_ERROR);
     }
 }
 
@@ -219,22 +235,18 @@ function start() {
  *
  */
 function list() {
-
      if (fs.existsSync(TMP_FILE)) {
         fs.readFile(TMP_FILE, function (err, data) {
             if (err) throw err;
             var _client = new adminClient();
-            var file = require(process.cwd()+"/config/master.json");
-            var config = file[data.toString().split(':')[0]];
+            var config = MASTER_JSON[data.toString().split(':')[0]];
             _client.connect('fantasyni',config.host,config.port,function(err){
                 if(err) {
-                    console.error('fail to connect to admin console server:');
-                    console.error(err);
+                    console.error(CONNECT_ERROR);
                 } else {
                     _client.request('nodeInfo', null, function(err, msg) {
                         if(err) {
-                          console.error('fail to request node info:');
-                          console.error(err);
+                          console.error(NODEINFO_ERROR);
                           return;
                         }
                         console.log(util.inspect(msg,true,null));
@@ -245,7 +257,7 @@ function list() {
         });
     }
     else {
-        abort("There is no running program.");
+        abort(NORUNNING_ERROR);
     }
 }
 
@@ -257,57 +269,55 @@ function list() {
  */
 function terminal(signal) {
     if (fs.existsSync(TMP_FILE)) {
-        var ex = exec('ps -p ' + fs.readFileSync(TMP_FILE).toString().split(':')[1], function (error, stdout, stderr) {
-            if (stdout.length <= 28) {
-                fs.unlinkSync(TMP_FILE);
-                abort("The program is stopped.");
-            }
-            else {
-               fs.readFile(TMP_FILE, function (err, data) {
-                    if (err) throw err;
-                    var _client = new adminClient();
-                    var file = require(process.cwd()+"/config/master.json");
-                    var config = file[data.toString().split(':')[0]];
-                    console.log("closing the program......\nplease wait......");
-                    
-                    _client.connect('fantasyni',config.host,config.port,function(err){
-                            if(err) throw err;
-                            _client.request('nodeInfo',null,function(err,msg){
-                                var _pid = [];
-                                var _serverId = [];
-                                for(var id in msg){
-                                    _pid.push(msg[id]['pid']);
-                                    _serverId.push(msg[id]['serverId']);
-                                }
-                                _client.request('serverStop', {signal:signal,pid:_pid,serverId:_serverId}, function(err, msg) {
-                                    if(err) throw err;
-                                    if (signal === 'kill') {
-                                        setTimeout(function () {
-                                            exec('kill -9 ' + data.toString().split(':')[1]);
-                                            fs.unlinkSync(TMP_FILE);
-                                            console.log(util.inspect(msg,true,null));
-                                            process.exit(1);
-                                        }, TIME_KILL_WAIT);
-                                    }
-                                    else {
-                                        setTimeout(function () {
-                                          fs.unlinkSync(TMP_FILE);
-                                          console.log(util.inspect(msg,true,null));
-                                          process.exit(1);
-                                        }, TIME_STOP_WAIT);
-                                    }
-                                });
-                            });
+        fs.readFile(TMP_FILE, function (err, data) {
+            if (err) throw err;
+            var _client = new adminClient();
+            var config = MASTER_JSON[data.toString().split(':')[0]];
+            console.info(CLOSEAPP_INFO);
+            _client.connect('fantasyni', config.host, config.port, function (err) {
+               if (err){
+                  console.error(CONNECT_ERROR);
+               }
+                _client.request('nodeInfo', null, function (err, msg) {
+                    var _pid = [];
+                    var _serverId = [];
+                    for (var id in msg) {
+                        _pid.push(msg[id]['pid']);
+                        _serverId.push(msg[id]['serverId']);
+                    }
+                    _client.request('serverStop', {signal:signal, pid:_pid, serverId:_serverId}, function (err, msg) {
+                        if (err){
+                            console.error(STOPSERVER_ERROR);
+                        }
+                        if (signal === 'kill') {
+                            if (data.toString().split(':')[2] == 'true') {
+                                if (IF_HOME)
+                                    exec('forever stop app.js');
+                                else
+                                    exec('cd game-server && forever stop app.js');
+                            }
+                            setTimeout(function () {
+                                exec('kill -9 ' + data.toString().split(':')[1]);
+                                // console.log(util.inspect(msg,true,null));
+                                fs.unlinkSync(TMP_FILE);
+                                process.exit(1);
+                            }, TIME_KILL_WAIT);
+                        }
+                        else {
+                            setTimeout(function () {
+                                fs.unlinkSync(TMP_FILE);
+                                // console.log(util.inspect(msg,true,null));
+                                process.exit(1);
+                            }, TIME_STOP_WAIT);
+                        }
                     });
                 });
-            }
+            });
         });
     }
-    else {
-        abort("There is no starting program.");
-    }
+    else
+        abort(NORUNNING_ERROR);
 }
-
 /**
  * Check if the given directory `path` is empty.
  *
@@ -375,7 +385,7 @@ function abort(str) {
 
 function legalArgNum(argNum) {
     if (args.length != argNum) {
-        console.error("The command arguments number is error.");
+        console.error(COMMAND_ERROR);
         process.exit(1);
     }
 }
@@ -448,16 +458,3 @@ function mkdir(url, mode, cb) {
     arr.length && inner(arr.shift());
     console.log('   \x1b[36mmakedir\x1b[0m : ' + url);
 }
-
-/**
- * Get address for command query and terminal
- *
- * @param {String} mode development/production 
- * @return {String} address for command
- */
-function getAddress(mode){
-   var file = require(process.cwd()+"/config/master.json");
-   var config = file[mode];
-   return "http://"+config.host+":"+config.port;
-}
-
