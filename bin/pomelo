@@ -144,9 +144,34 @@ function createApplicationAt(path) {
  *
  */
 function start() {
-    if (args.length > 1 || (args.length == 1 && (args[0] !== 'development' && args[0] !== 'production'))) {
-        abort("The argument is error.");
-    }
+    var mode = "development";
+    var deamon = false;
+    switch(args.length) {
+      case 0:
+         break;
+      case 1:
+         if(args[0] == 'development' || args[0] == 'production')
+              mode = args[0];
+         else if(args[0] == '--deamon')
+              deamon = true;
+         else
+            abort("The argument is error.");
+         break;
+      case 2:
+         if(args[0] == 'development' || args[0] == 'production'){
+                mode = args[0];
+                if(args[1] == '--deamon')
+                     deamon = true;
+                else 
+                     abort("The argument is error.");
+         } 
+         else
+               abort("The argument is error.");
+         break;
+      default:
+           abort("The argument is error.");
+           break;
+  };
     if (fs.existsSync('./app.js')) {
         if (fs.existsSync(TMP_FILE)) {
             var ex = exec('ps -p ' + fs.readFileSync(TMP_FILE).toString().split(':')[1], function (error, stdout, stderr) {
@@ -155,19 +180,28 @@ function start() {
                 }
             });
         }
-
-        var mode = args.length === 0 ? 'development' : args[0];
-        var ls = spawn('node', ['app.js', 'env='+mode]);
-
+        mode = args.length === 0 ? 'development' : args[0];
+        var ls;
+        if(!deamon){
+            ls = spawn('node', ['app.js', 'env='+mode]);
+            ls.stdout.on('data', function (data) {
+            console.log(data.toString());
+               });
+            ls.stderr.on('data', function (data) {
+            console.log(data.toString());
+               });
+        }
+        else{
+             if(fs.existsSync('/usr/local/bin/forever')){
+                 ls = spawn('forever', ['start', 'app.js', 'env='+mode]);
+                 console.log("Stop the application use the command:pomelo stop");
+             }
+             else 
+                 abort("Please install forever use command: npm install forever -g.");
+        }
         //reserve the child process pid and start mode
         fs.writeFile(TMP_FILE, mode+':'+ls.pid);
 
-        ls.stdout.on('data', function (data) {
-            console.log(data.toString());
-        });
-        ls.stderr.on('data', function (data) {
-            console.log(data.toString());
-        });
         ls.on('exit', function (code) {
             if(code != 11){
                 //console.error('start project failed,exited with code ' + code);
