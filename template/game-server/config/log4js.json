@@ -62,10 +62,21 @@
         }
       ,"backups": 5,
       "category":"processInfo-log"
+    },
+    {
+      "type": "file",
+      "filename": "./logs/crash.log",
+      "fileSize": 1048576,
+      "layout": {
+          "type": "basic"
+        }
+      ,"backups": 5,
+      "category":"crash-log"
     }
   ],
 
   "levels": {
-  	"rpc-log": "ERROR"
+  	"rpc-log" : "ERROR", 
+    "forward-log": "ERROR"
   }
 }
