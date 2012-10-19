@@ -8,7 +8,7 @@ var fs = require('fs')
     client = require('socket.io-client'),
     exec = cp.exec,
     spawn = cp.spawn,
-    adminClient = require('../lib/client/client'),
+    adminClient = require('pomelo-admin').adminClient,
     utils = require('../lib/util/utils');
     util = require('util');
 
