@@ -3,8 +3,7 @@
     "version":"0.0.1",
     "private":false,
     "dependencies":{
-        "express":"2.5.2",
-        "pomelo":">=0.1.51"
+        "pomelo":"0.1.72"
     }
 }
 
