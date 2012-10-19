@@ -116,7 +116,7 @@ function init(path) {
         if (empty) {
             createApplicationAt(path);
         } else {
-            confirm('destination is not empty, continue? ', function (ok) {
+            confirm('destination is not empty, continue? (y/n)', function (ok) {
                 if (ok) {
                     process.stdin.destroy();
                     createApplicationAt(path);
