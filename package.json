@@ -1,6 +1,6 @@
 {
     "name":"pomelo",
-    "version":"0.1.80",
+    "version":"0.1.82",
     "private":false,
     "dependencies":{
         "express":"2.5.2",
@@ -20,7 +20,7 @@
         "pomelo-loader":">=0.0.4",
         "pomelo-rpc":">=0.0.10",
         "pomelo-protocol":">=0.0.3", 
-        "pomelo-admin":">=0.0.1", 
+        "pomelo-admin":">=0.0.7", 
         "pomelo-logger": "0.0.2"
     },
     "bin":{
