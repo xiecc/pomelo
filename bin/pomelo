@@ -23,6 +23,7 @@ var TIME_STOP_WAIT = 10000;
 var IF_WORKSPACE = fs.existsSync('./app.js')||fs.existsSync('game-server/app.js'); 
 var IF_HOME = utils.endsWith(process.cwd(),'game-server');
 var FOREVER = fs.existsSync('/usr/local/bin/forever');
+var HOME = IF_HOME ? process.cwd() : process.cwd()+'/game-server';
 var TMP_FILE = IF_HOME ? process.cwd()+'/../logs/tmp' :  process.cwd()+ '/logs/tmp';
 var MASTER_JSON;
 
@@ -197,12 +198,12 @@ function start() {
         var ls;
         if(!DEAMON){
             if(!IF_HOME){
-                var cmd = util.format('cd %s && node app.js env=','game-server');
+                var cmd = util.format('cd %s && node '+ HOME +'/app.js env=','game-server');
                     cmd += mode;
                      ls = exec(cmd);
             }
             else
-                ls = spawn('node', ['app.js', 'env='+mode]);
+                ls = spawn('node', [HOME + '/app.js', 'env='+mode]);
             ls.stdout.on('data', function (data) {
                     console.log(data.toString());
                });
@@ -301,8 +302,7 @@ function terminal(signal) {
                                     exec('cd game-server && forever stop app.js');
                             }
                             setTimeout(function () {
-                                exec('kill -9 ' + data.toString().split(':')[1]);
-                                // console.log(util.inspect(msg,true,null));
+                                exec('kill -9 `ps -ef|grep "node ' + HOME + '/app.js' + '"|awk \'{print $2}\'`');
                                 fs.unlinkSync(TMP_FILE);
                                 process.exit(1);
                             }, TIME_KILL_WAIT);
@@ -310,7 +310,6 @@ function terminal(signal) {
                         else {
                             setTimeout(function () {
                                 fs.unlinkSync(TMP_FILE);
-                                // console.log(util.inspect(msg,true,null));
                                 process.exit(1);
                             }, TIME_STOP_WAIT);
                         }
