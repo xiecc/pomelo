@@ -24,12 +24,14 @@ var IF_WORKSPACE = fs.existsSync('./app.js')||fs.existsSync('game-server/app.js'
 var IF_HOME = utils.endsWith(process.cwd(),'game-server');
 var FOREVER = fs.existsSync('/usr/local/bin/forever');
 var HOME = IF_HOME ? process.cwd() : process.cwd()+'/game-server';
-var TMP_FILE = IF_HOME ? process.cwd()+'/../logs/tmp' :  process.cwd()+ '/logs/tmp';
+var LOGS_DIR =  IF_HOME ? process.cwd()+'/../logs/' :  process.cwd()+ '/logs/';
+var TMP_FILE = LOGS_DIR + 'tmp';
 var MASTER_JSON;
 
 var DEV = "development";
 var PRD = "production";
-var DEM = "--daemon"
+var DEM = "--daemon";
+var FOREVER_ARGS = "-o " + LOGS_DIR + "forever/out.log -e " + LOGS_DIR + "forever/err.log";
 var NOWORKSPACE_ERROR = "Please go to your pomelo project workspace to start the application.";
 var COMMAND_ERROR = "The command is error format.";
 var NORUNNING_ERROR = "There is no running program.";
@@ -213,14 +215,12 @@ function start() {
         }
         else{
              if(FOREVER){
+                var cmd = 'forever start '+ FOREVER_ARGS + ' app.js env=' + mode; 
                 if(!IF_HOME){
-                    var cmd = util.format('cd %s && forever start app.js env=','game-server');
-                    cmd += mode;
-                    ls = exec(cmd);
-                 }
-                else
-                   ls = spawn('forever', ['start', 'app.js', 'env='+mode]);
-                console.info(RUNDEAMON_INFO);
+                    cmd = util.format('cd %s && ' + cmd,'game-server');
+                 }  
+               ls = exec(cmd);
+               console.info(RUNDEAMON_INFO);
              }
              else 
                  abort(INSTALLFOREVER_ERROR);
@@ -275,6 +275,19 @@ function terminal(signal) {
     if (fs.existsSync(TMP_FILE)) {
         fs.readFile(TMP_FILE, function (err, data) {
             if (err) throw err;
+            if (signal === 'kill') {
+                if (data.toString().split(':')[2] == 'true') {
+                                if (IF_HOME)
+                                    exec('forever stop app.js');
+                                else
+                                    exec('cd game-server && forever stop app.js');
+                 }
+                 setTimeout(function () {
+                     exec('kill -9 `ps -ef|grep "node ' + HOME + '/app.js' + '"|awk \'{print $2}\'`');
+                     fs.unlinkSync(TMP_FILE);
+                     process.exit(1);
+                     }, TIME_KILL_WAIT);
+             }
             var _client = new adminClient();
             MASTER_JSON = IF_HOME ? require(process.cwd()+"/config/master.json"):require(process.cwd()+"/game-server/config/master.json");
             var config = MASTER_JSON[data.toString().split(':')[0]];
@@ -294,25 +307,10 @@ function terminal(signal) {
                         if (err){
                             console.error(STOPSERVER_ERROR);
                         }
-                        if (signal === 'kill') {
-                            if (data.toString().split(':')[2] == 'true') {
-                                if (IF_HOME)
-                                    exec('forever stop app.js');
-                                else
-                                    exec('cd game-server && forever stop app.js');
-                            }
-                            setTimeout(function () {
-                                exec('kill -9 `ps -ef|grep "node ' + HOME + '/app.js' + '"|awk \'{print $2}\'`');
+                        setTimeout(function () {
                                 fs.unlinkSync(TMP_FILE);
-                                process.exit(1);
-                            }, TIME_KILL_WAIT);
-                        }
-                        else {
-                            setTimeout(function () {
-                                fs.unlinkSync(TMP_FILE);
-                                process.exit(1);
-                            }, TIME_STOP_WAIT);
-                        }
+                                process.exit();
+                        }, TIME_STOP_WAIT);
                     });
                 });
             });
