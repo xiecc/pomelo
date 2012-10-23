@@ -253,7 +253,10 @@ function list() {
                           console.error(NODEINFO_ERROR);
                           return;
                         }
-                        console.log(util.inspect(msg,true,null));
+                        console.log('serverId             serverType         pid            cpuAvg        memAvg        time');
+                        for(var key in msg){
+                            console.log(msg[key]['serverId'] + '             ' + msg[key]['serverType'] + '         ' + msg[key]['pid'] + '            ' + msg[key]['cpuAvg'] + '        ' + msg[key]['memAvg'] + '       ' + msg[key]['time']);
+                        }
                         process.exit(1);
                     });
                 }
