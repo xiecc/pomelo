@@ -39,6 +39,7 @@ var INSTALLFOREVER_ERROR = "Please install forever use command: npm install fore
 var CONNECT_ERROR =  "Fail to connect to admin console server.";
 var NODEINFO_ERROR = "Fail to request node information.";
 var STOPSERVER_ERROR = "Fail to stop server.";
+var FILEREAD_ERROR = "Fail to read the file.";
 var RUNDEAMON_INFO = "Application run in daemon.\nStop the application use the command:pomelo stop.";
 var CLOSEAPP_INFO = "Closing the application......\nPlease wait......"; 
 
@@ -153,7 +154,7 @@ function createApplicationAt(path) {
     }
 
     copy(__dirname + '/../template/', path);
-    mkdir(path + '/logs', 0);
+    mkdir(path + '/logs/forever', 0);
     mkdir(path + '/shared', 0);
     setTimeout(function () {
         var repalcefile = [path + '/game-server/app.js', path + '/game-server/package.json', path + '/web-server/package.json'];
@@ -240,20 +241,22 @@ function start() {
 function list() {
      if (fs.existsSync(TMP_FILE)) {
         fs.readFile(TMP_FILE, function (err, data) {
-            if (err) throw err;
-            var _client = new adminClient();
+            if (err){
+                 abort(FILEREAD_ERROR);
+            }
+            var client = new adminClient();
             MASTER_JSON = IF_HOME ? require(process.cwd()+"/config/master.json"):require(process.cwd()+"/game-server/config/master.json");
             var config = MASTER_JSON[data.toString().split(':')[0]];
-            _client.connect('fantasyni',config.host,config.port,function(err){
+            client.connect('fantasyni',config.host,config.port,function(err){
                 if(err) {
-                    console.error(CONNECT_ERROR);
-                } else {
-                    _client.request('nodeInfo', null, function(err, msg) {
+                    abort(CONNECT_ERROR);
+                } 
+                else {
+                        client.request('nodeInfo', null, function(err, msg) {
                         if(err) {
-                          console.error(NODEINFO_ERROR);
-                          return;
+                          abort(NODEINFO_ERROR);
                         }
-                        console.log(util.inspect(msg,true,null));
+                        utils.pomelo_list_format_output(msg);
                         process.exit(1);
                     });
                 }
@@ -274,25 +277,27 @@ function list() {
 function terminal(signal) {
     if (fs.existsSync(TMP_FILE)) {
         fs.readFile(TMP_FILE, function (err, data) {
-            if (err) throw err;
-            var _client = new adminClient();
+            if (err){
+                abort(FILEREAD_ERROR);
+            }
+            var client = new adminClient();
             MASTER_JSON = IF_HOME ? require(process.cwd() + "/config/master.json") : require(process.cwd() + "/game-server/config/master.json");
             var config = MASTER_JSON[data.toString().split(':')[0]];
             console.info(CLOSEAPP_INFO);
-            _client.connect('fantasyni', config.host, config.port, function (err) {
+            client.connect('fantasyni', config.host, config.port, function (err) {
                 if (err) {
-                    console.error(CONNECT_ERROR);
+                    abort(CONNECT_ERROR);
                 }
-                _client.request('nodeInfo', null, function (err, msg) {
-                    var _pid = [];
-                    var _serverId = [];
+                client.request('nodeInfo', null, function (err, msg) {
+                    var pid = [];
+                    var serverId = [];
                     for (var id in msg) {
-                        _pid.push(msg[id]['pid']);
-                        _serverId.push(msg[id]['serverId']);
+                        pid.push(msg[id]['pid']);
+                        serverId.push(msg[id]['serverId']);
                     }
-                    _client.request('serverStop', {signal:signal, pid:_pid, serverId:_serverId}, function (err, msg) {
+                    client.request('serverStop', {signal:signal, pid:pid, serverId:serverId}, function (err, msg) {
                         if (err) {
-                            console.error(STOPSERVER_ERROR);
+                            abort(STOPSERVER_ERROR);
                         }
                         setTimeout(function () {
                                 if (data.toString().split(':')[2] == 'true') {
@@ -314,14 +319,12 @@ function terminal(signal) {
         abort(NORUNNING_ERROR);
 }
 
-
 /**
  * Check if the given directory `path` is empty.
  *
  * @param {String} path
  * @param {Function} fn
  */
-
 function emptyDirectory(path, fn) {
     fs.readdir(path, function (err, files) {
         if (err && 'ENOENT' != err.code) throw err;
@@ -335,7 +338,6 @@ function emptyDirectory(path, fn) {
  * @param {String} msg
  * @param {Function} fn
  */
-
 function confirm(msg, fn) {
     prompt(msg, function (val) {
         fn(/^ *y(es)?/i.test(val));
@@ -348,7 +350,6 @@ function confirm(msg, fn) {
  * @param {String} msg
  * @param {Function} fn
  */
-
 function prompt(msg, fn) {
     // prompt
     if (' ' == msg[msg.length - 1]) {
@@ -368,7 +369,6 @@ function prompt(msg, fn) {
  *
  * @param {String} str
  */
-
 function abort(str) {
     console.error(str);
     process.exit(1);
@@ -379,7 +379,6 @@ function abort(str) {
  *
  * @param {Number} argNum
  */
-
 function legalArgNum(argNum) {
     if (args.length != argNum) {
         console.error(COMMAND_ERROR);
