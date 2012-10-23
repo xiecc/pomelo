@@ -18,13 +18,13 @@ var fs = require('fs')
 var args = process.argv.slice(2);
 var DEAMON = false;
 var TIME_INIT = 1000;
-var TIME_KILL_WAIT = 6000;
-var TIME_STOP_WAIT = 10000;
+var TIME_KILL_WAIT = 5000;
 var IF_WORKSPACE = fs.existsSync('./app.js')||fs.existsSync('game-server/app.js'); 
 var IF_HOME = utils.endsWith(process.cwd(),'game-server');
 var FOREVER = fs.existsSync('/usr/local/bin/forever');
 var HOME = IF_HOME ? process.cwd() : process.cwd()+'/game-server';
 var LOGS_DIR =  IF_HOME ? process.cwd()+'/../logs/' :  process.cwd()+ '/logs/';
+var KILL_CMD = 'kill -9 `ps -ef|grep "node ' + HOME + '/app.js' + '"|awk \'{print $2}\'`';
 var TMP_FILE = LOGS_DIR + 'tmp';
 var MASTER_JSON;
 
@@ -275,27 +275,14 @@ function terminal(signal) {
     if (fs.existsSync(TMP_FILE)) {
         fs.readFile(TMP_FILE, function (err, data) {
             if (err) throw err;
-            if (signal === 'kill') {
-                if (data.toString().split(':')[2] == 'true') {
-                                if (IF_HOME)
-                                    exec('forever stop app.js');
-                                else
-                                    exec('cd game-server && forever stop app.js');
-                 }
-                 setTimeout(function () {
-                     exec('kill -9 `ps -ef|grep "node ' + HOME + '/app.js' + '"|awk \'{print $2}\'`');
-                     fs.unlinkSync(TMP_FILE);
-                     process.exit(1);
-                     }, TIME_KILL_WAIT);
-             }
             var _client = new adminClient();
-            MASTER_JSON = IF_HOME ? require(process.cwd()+"/config/master.json"):require(process.cwd()+"/game-server/config/master.json");
+            MASTER_JSON = IF_HOME ? require(process.cwd() + "/config/master.json") : require(process.cwd() + "/game-server/config/master.json");
             var config = MASTER_JSON[data.toString().split(':')[0]];
             console.info(CLOSEAPP_INFO);
             _client.connect('fantasyni', config.host, config.port, function (err) {
-               if (err){
-                  console.error(CONNECT_ERROR);
-               }
+                if (err) {
+                    console.error(CONNECT_ERROR);
+                }
                 _client.request('nodeInfo', null, function (err, msg) {
                     var _pid = [];
                     var _serverId = [];
@@ -304,13 +291,20 @@ function terminal(signal) {
                         _serverId.push(msg[id]['serverId']);
                     }
                     _client.request('serverStop', {signal:signal, pid:_pid, serverId:_serverId}, function (err, msg) {
-                        if (err){
+                        if (err) {
                             console.error(STOPSERVER_ERROR);
                         }
                         setTimeout(function () {
+                                if (data.toString().split(':')[2] == 'true') {
+                                    if (IF_HOME)
+                                        exec('forever stop app.js');
+                                    else
+                                        exec('cd game-server && forever stop app.js');
+                                }
+                                exec(KILL_CMD);
                                 fs.unlinkSync(TMP_FILE);
-                                process.exit();
-                        }, TIME_STOP_WAIT);
+                                process.exit(1);
+                         }, TIME_KILL_WAIT);
                     });
                 });
             });
@@ -319,6 +313,8 @@ function terminal(signal) {
     else
         abort(NORUNNING_ERROR);
 }
+
+
 /**
  * Check if the given directory `path` is empty.
  *
