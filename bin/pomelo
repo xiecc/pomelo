@@ -256,10 +256,7 @@ function list() {
                         if(err) {
                           abort(NODEINFO_ERROR);
                         }
-                        console.log('serverId             serverType         pid            cpuAvg        memAvg        time');
-                        for(var key in msg){
-                            console.log(msg[key]['serverId'] + '             ' + msg[key]['serverType'] + '         ' + msg[key]['pid'] + '            ' + msg[key]['cpuAvg'] + '        ' + msg[key]['memAvg'] + '       ' + msg[key]['time']);
-                        }
+                        utils.pomelo_list_format_output(msg);
                         process.exit(1);
                     });
                 }
