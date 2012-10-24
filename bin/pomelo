@@ -21,27 +21,29 @@ var TIME_INIT = 1000;
 var TIME_KILL_WAIT = 5000;
 var CUR_DIR = process.cwd();
 var IF_HOME = utils.endsWith(CUR_DIR,'game-server');
+var IF_WORKSPACE = fs.existsSync('./app.js')||fs.existsSync('game-server/app.js'); 
 var FOREVER = fs.existsSync('/usr/local/bin/forever');
 var HOME = IF_HOME ? CUR_DIR : CUR_DIR+'/game-server';
 var LOGS_DIR =  IF_HOME ? CUR_DIR+'/../logs/' :  CUR_DIR+ '/logs/';
+var MASTER_CONFIG = HOME + '/config/master.json';
 var KILL_CMD = 'kill -9 `ps -ef|grep "node ' + HOME + '/app.js' + '"|awk \'{print $2}\'`';
 var TMP_FILE = LOGS_DIR + 'tmp';
 var MASTER_JSON;
 
-var DEV = "development";
-var PRD = "production";
-var DEM = "--daemon";
-var FOREVER_ARGS = "-o " + LOGS_DIR + "forever/out.log -e " + LOGS_DIR + "forever/err.log";
-var NOWORKSPACE_ERROR = "Please go to your pomelo project workspace to start the application.";
-var COMMAND_ERROR = "The command is error format.";
-var NORUNNING_ERROR = "There is no running program.";
-var INSTALLFOREVER_ERROR = "Please install forever use command: npm install forever -g.";
-var CONNECT_ERROR =  "Fail to connect to admin console server.";
-var NODEINFO_ERROR = "Fail to request node information.";
-var STOPSERVER_ERROR = "Fail to stop server.";
-var FILEREAD_ERROR = "Fail to read the file.";
-var RUNDEAMON_INFO = "Application run in daemon.\nStop the application use the command:pomelo stop.";
-var CLOSEAPP_INFO = "Closing the application......\nPlease wait......"; 
+var DEV = 'development';
+var PRD = 'production';
+var DEM = '--daemon';
+var FOREVER_ARGS = '-o ' + LOGS_DIR + 'forever/out.log -e ' + LOGS_DIR + 'forever/err.log';
+var NOWORKSPACE_ERROR = 'Please go to your pomelo project workspace to start the application.';
+var COMMAND_ERROR = 'The command is error format.';
+var NORUNNING_ERROR = 'There is no running program.';
+var INSTALLFOREVER_ERROR = 'Please install forever use command: npm install forever -g.';
+var CONNECT_ERROR =  'Fail to connect to admin console server.';
+var NODEINFO_ERROR = 'Fail to request node information.';
+var STOPSERVER_ERROR = 'Fail to stop server.';
+var FILEREAD_ERROR = 'Fail to read the file.';
+var RUNDEAMON_INFO = 'Application run in daemon.\nStop the application use the command:pomelo stop.';
+var CLOSEAPP_INFO = 'Closing the application......\nPlease wait......'; 
 
 
 /**
@@ -245,7 +247,7 @@ function list() {
                  abort(FILEREAD_ERROR);
             }
             var client = new adminClient();
-            MASTER_JSON = IF_HOME ? require(CUR_DIR+"/config/master.json"):require(CUR_DIR+"/game-server/config/master.json");
+            MASTER_JSON = require(MASTER_CONFIG);
             var config = MASTER_JSON[data.toString().split(':')[0]];
             var id = 'pomelo_list_' + Date.now();
             client.connect(id,config.host,config.port,function(err){
@@ -282,7 +284,7 @@ function terminal(signal) {
                 abort(FILEREAD_ERROR);
             }
             var client = new adminClient();
-            MASTER_JSON = IF_HOME ? require(CUR_DIR + "/config/master.json") : require(CUR_DIR + "/game-server/config/master.json");
+            MASTER_JSON = require(MASTER_CONFIG);
             var config = MASTER_JSON[data.toString().split(':')[0]];
             console.info(CLOSEAPP_INFO);
             var id = 'pomelo_terminal_' + Date.now();
@@ -400,7 +402,7 @@ function copy(origin, target) {
     }
     if (!fs.existsSync(target)) {
         mkdir(target, 0);
-        console.log('   \x1b[36mmakedir\x1b[0m : ' + target);
+        console.log('Make dir: ' + target);
     }
     fs.readdir(origin, function (err, datalist) {
         if (err) return;
@@ -409,7 +411,7 @@ function copy(origin, target) {
             var tCurrent = target + '/' + datalist[i];
             if (fs.statSync(oCurrent).isFile()) {
                 fs.writeFileSync(tCurrent, fs.readFileSync(oCurrent, ''), '');
-                console.log('   \x1b[36mcreatefile\x1b[0m : ' + oCurrent);
+                console.log('Create file: ' + oCurrent);
             }
             else if (fs.statSync(oCurrent).isDirectory()) {
                 copy(oCurrent, tCurrent);
@@ -454,5 +456,5 @@ function mkdir(url, mode, cb) {
     }
 
     arr.length && inner(arr.shift());
-    console.log('   \x1b[36mmakedir\x1b[0m : ' + url);
+    console.log('Make dir: ' + url);
 }
