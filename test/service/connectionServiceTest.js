@@ -1,5 +1,5 @@
 var should = require('should');
-var connectionService = require('../lib/common/service/connectionService');
+var connectionService = require('../../lib/common/service/connectionService');
 
 var mockPlayer1 = {
 	uid : "123",
@@ -57,12 +57,14 @@ describe("connectionService",function(){
 
 		mockService1.addLoginedUser(mockPlayer1.uid,mockPlayer1.info);
 		mockService1.addLoginedUser(mockPlayer2.uid,mockPlayer2.info);
+		mockService1.increaseConnectionCount();
+		mockService1.increaseConnectionCount();
 
 		var statisticsInfo = mockService1.getStatisticsInfo();
 
 		statisticsInfo.should.have.property('serverId','connector-server-1');
-		statisticsInfo.should.have.property('totalConnCount','2');
-		statisticsInfo.should.have.property('loginedCount','2');
+		statisticsInfo.should.have.property('totalConnCount',2);
+		statisticsInfo.should.have.property('loginedCount',2);
 		statisticsInfo.should.have.property('loginedList').with.lengthOf(2);
 
 		done();
