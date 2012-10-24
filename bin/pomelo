@@ -247,7 +247,8 @@ function list() {
             var client = new adminClient();
             MASTER_JSON = IF_HOME ? require(process.cwd()+"/config/master.json"):require(process.cwd()+"/game-server/config/master.json");
             var config = MASTER_JSON[data.toString().split(':')[0]];
-            client.connect('fantasyni',config.host,config.port,function(err){
+            var id = 'pomelo_list_' + Date.now();
+            client.connect(id,config.host,config.port,function(err){
                 if(err) {
                     abort(CONNECT_ERROR);
                 } 
@@ -284,7 +285,8 @@ function terminal(signal) {
             MASTER_JSON = IF_HOME ? require(process.cwd() + "/config/master.json") : require(process.cwd() + "/game-server/config/master.json");
             var config = MASTER_JSON[data.toString().split(':')[0]];
             console.info(CLOSEAPP_INFO);
-            client.connect('fantasyni', config.host, config.port, function (err) {
+            var id = 'pomelo_terminal_' + Date.now();
+            client.connect(id, config.host, config.port, function (err) {
                 if (err) {
                     abort(CONNECT_ERROR);
                 }
