@@ -1,6 +1,6 @@
 {
     "name":"pomelo",
-    "version":"0.1.83",
+    "version":"0.1.84",
     "private":false,
     "dependencies":{
         "express":"2.5.2",
@@ -9,7 +9,7 @@
         "pomelo-schedule":">=0.3.3",
         "pomelo-monitor":">=0.2.7",
         "aoi-service":"=0.1.2",
-        "data-sync":">=0.0.13",
+        "pomelo-sync":">=0.0.1",
         "v8-profiler":">=3.6.2-1",
         "generic-pool":">=1.0.9",
         "async":">=0.0.1",
