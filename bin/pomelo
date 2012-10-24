@@ -19,11 +19,11 @@ var args = process.argv.slice(2);
 var DEAMON = false;
 var TIME_INIT = 1000;
 var TIME_KILL_WAIT = 5000;
-var IF_WORKSPACE = fs.existsSync('./app.js')||fs.existsSync('game-server/app.js'); 
-var IF_HOME = utils.endsWith(process.cwd(),'game-server');
+var CUR_DIR = process.cwd();
+var IF_HOME = utils.endsWith(CUR_DIR,'game-server');
 var FOREVER = fs.existsSync('/usr/local/bin/forever');
-var HOME = IF_HOME ? process.cwd() : process.cwd()+'/game-server';
-var LOGS_DIR =  IF_HOME ? process.cwd()+'/../logs/' :  process.cwd()+ '/logs/';
+var HOME = IF_HOME ? CUR_DIR : CUR_DIR+'/game-server';
+var LOGS_DIR =  IF_HOME ? CUR_DIR+'/../logs/' :  CUR_DIR+ '/logs/';
 var KILL_CMD = 'kill -9 `ps -ef|grep "node ' + HOME + '/app.js' + '"|awk \'{print $2}\'`';
 var TMP_FILE = LOGS_DIR + 'tmp';
 var MASTER_JSON;
@@ -139,7 +139,7 @@ function init(path) {
  */
 function createApplicationAt(path) {
     var name = path;
-    var cwd = process.cwd();
+    var cwd = CUR_DIR;
     if (path.indexOf('/') !== -1) {
         var str = path.split('/');
         name = str[str.length - 1];
@@ -245,7 +245,7 @@ function list() {
                  abort(FILEREAD_ERROR);
             }
             var client = new adminClient();
-            MASTER_JSON = IF_HOME ? require(process.cwd()+"/config/master.json"):require(process.cwd()+"/game-server/config/master.json");
+            MASTER_JSON = IF_HOME ? require(CUR_DIR+"/config/master.json"):require(CUR_DIR+"/game-server/config/master.json");
             var config = MASTER_JSON[data.toString().split(':')[0]];
             client.connect('fantasyni',config.host,config.port,function(err){
                 if(err) {
@@ -281,7 +281,7 @@ function terminal(signal) {
                 abort(FILEREAD_ERROR);
             }
             var client = new adminClient();
-            MASTER_JSON = IF_HOME ? require(process.cwd() + "/config/master.json") : require(process.cwd() + "/game-server/config/master.json");
+            MASTER_JSON = IF_HOME ? require(CUR_DIR + "/config/master.json") : require(CUR_DIR + "/game-server/config/master.json");
             var config = MASTER_JSON[data.toString().split(':')[0]];
             console.info(CLOSEAPP_INFO);
             client.connect('fantasyni', config.host, config.port, function (err) {
