@@ -9,10 +9,9 @@ var WAIT_TIME = 100;
 var status;
 var uid = 123;
 
-describe('sessionServiceTest', function(){
+describe('#sessionServiceTest', function(){
     var session;
     before(function(){
-        
         var wsocket = sio.listen(port);
         wsocket.set('log level', 1);
         wsocket.sockets.on('connection', function (socket) {
@@ -25,7 +24,6 @@ describe('sessionServiceTest', function(){
                 status = 'disconnect';
             });
         });
-
     });
     
     it('should create sessionService and send msg ok',function(done){
