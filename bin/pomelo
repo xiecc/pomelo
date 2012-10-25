@@ -3,13 +3,13 @@
 /**
  * Module dependencies.
  */
-var fs = require('fs')
+var fs = require('fs'),
     cp = require('child_process'),
     client = require('socket.io-client'),
     exec = cp.exec,
     spawn = cp.spawn,
     adminClient = require('pomelo-admin').adminClient,
-    utils = require('../lib/util/utils');
+    utils = require('../lib/util/utils'),
     util = require('util');
 
 /**
@@ -54,8 +54,9 @@ var usage = ''
         + '  Usage: pomelo [action] [option]\n'
         + '\n'
         + '  Options:\n'
-        + '    init  [path]              init the application\n'
+        + '    init  [path]              create new application\n'
         + '    start [option]            start the application\n'
+        + '    list                      list server information\n'
         + '    stop                      stop the application\n'
         + '    kill                      kill the application\n'
         + '    version                   output framework version\n'
