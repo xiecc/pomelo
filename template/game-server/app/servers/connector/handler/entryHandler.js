@@ -6,8 +6,6 @@ var Handler = function(app) {
 	this.app = app;
 };
 
-var pro = Handler.prototype;
-
 /**
  * New client entry chat server. 
  * 
@@ -16,6 +14,6 @@ var pro = Handler.prototype;
  * @param  {Function} next    next stemp callback
  * @return {Void}
  */
-pro.entry = function(msg, session, next) {
+Handler.prototype.entry = function(msg, session, next) {
       next(null, {code: 200, msg: 'hello,pomelo!'});
 };
