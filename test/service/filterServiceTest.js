@@ -39,7 +39,7 @@ var MockSession = function(){
 	this.afterCount2 = 0;
 };
 
-describe('filterService', function() {
+describe('filter service test', function() {
 	describe('#filter', function() {
 		it('should register before filter by calling before method and fire filter chain by calling beforeFilter', function(done) {
 			var session = new MockSession();

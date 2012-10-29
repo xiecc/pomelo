@@ -1,20 +1,17 @@
 {
     "name":"pomelo",
-    "version":"0.1.84",
+    "version":"0.1.87",
     "private":false,
     "dependencies":{
         "socket.io":">=0.9.4",
-        "pomelo-schedule":">=0.3.3",
-        "pomelo-monitor":">=0.2.7",
         "pomelo-sync":">=0.0.1",
         "async":">=0.0.1",
-        "seq-queue":">=0.0.4",
-        "socket.io-client":">=0.9.4",
+        "seq-queue":">=0.0.5",
         "crc":">=0.0.1",
         "pomelo-loader":">=0.0.4",
         "pomelo-rpc":">=0.0.10",
         "pomelo-protocol":">=0.0.3", 
-        "pomelo-admin":">=0.0.7", 
+        "pomelo-admin":">=0.0.9", 
         "pomelo-logger": "0.0.2"
     },
     "bin":{
