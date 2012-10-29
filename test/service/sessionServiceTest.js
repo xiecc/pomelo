@@ -11,8 +11,9 @@ var uid = 123;
 
 describe('#sessionServiceTest', function(){
     var session;
+    var wsocket;
     before(function(){
-        var wsocket = sio.listen(port);
+        wsocket = sio.listen(port);
         wsocket.set('log level', 1);
         wsocket.sockets.on('connection', function (socket) {
             session = sessionService.createSession({
@@ -24,6 +25,10 @@ describe('#sessionServiceTest', function(){
                 status = 'disconnect';
             });
         });
+    });
+
+    after(function(){
+        wsocket.server.close();
     });
     
     it('should create sessionService and send msg ok',function(done){
@@ -78,5 +83,6 @@ describe('#sessionServiceTest', function(){
             });          
         });
     });
+
 });
 
