@@ -164,6 +164,10 @@ function createApplicationAt(path) {
             var str = fs.readFileSync(repalcefile[i]).toString();
             fs.writeFileSync(repalcefile[i], str.replace('$', name));
         }
+        var f = path + '/game-server/package.json';
+        var content = fs.readFileSync(f).toString();
+        fs.writeFileSync(f, content.replace('#', version));
+ 
     }, TIME_INIT);
 }
 
