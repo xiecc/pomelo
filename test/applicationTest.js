@@ -1,165 +1,167 @@
-var pomelo = require('../lib/pomelo');
+var app = require('../lib/application');
 var should = require('should');
-var filterManager = require('../lib/filterManager');
 
-describe('applicationTest', function(){
-    var app = pomelo.createApp();
+var WAIT_TIME = 100;
 
-    before(function(done){
-        filterManager.clear();
-        done();
-    });
-    after(function(done){
-        done();
-    });
-    describe('#set()', function(){
-        it('set and get should be ok!', function(done){
-            app.should.have.property('settings');
-            app.set('test',true);
-            var test = app.get('test');
-            test.should.be.ok;
-            done();
-        });
+describe('application test', function(){
+	afterEach(function() {
+		app.state = 0;
+	});
 
-        it('set json should be ok!', function(done){
-            app.set('servers', __dirname+'/config/servers.json');
+	describe('#init', function() {
+		it('should init the app instance', function() {
+			app.init();
+			app.state.should.equal(1);  // magic number from application.js
+		});
+	});
 
-            var servers = app.get('servers');
+	describe('#set and get', function() {
+		it('should play the role of normal set and get', function() {
+			should.not.exist(app.get('some undefined key'));
 
-            should.exist(servers);
+			var key = 'some defined key', value = 'some value';
+			app.set(key, value);
+			value.should.equal(app.get(key));
+		});
+	});
 
-            servers.should.have.property('connector');
-            servers.should.have.property('area');
-            servers.should.have.property('logic');
+	describe("#enable and disable", function() {
+		it('should play the role of enable and disable', function() {
+			var key = 'some enable key';
+			app.enabled(key).should.be.false;
+			app.disabled(key).should.be.true;
 
-            done();
-        });
-    });
+			app.enable(key);
+			app.enabled(key).should.be.true;
+			app.disabled(key).should.be.false;
 
-    it('enable should be ok!', function(done){
-        app.enable('openStack');
-        var result = app.enabled('openStack');
-        result.should.be.ok;
+			app.disable(key);
+			app.enabled(key).should.be.false;
+			app.disabled(key).should.be.true;
+		});
+	});
 
-        app.disable('openStack');
-        result = app.enabled('openStack');
-        result.should.not.be.ok;
+	describe("#compoent", function() {
+		it('should load the component and fire their lifecircle callback by app.start, app.afterStart, app.stop', function(done) {
+			var startCount = 0, afterStartCount = 0, stopCount = 0;
 
-        done();
-    });
+			var mockComponent = {
+				start: function(cb) {
+					startCount++;
+					cb();
+				}, 
 
-    it('enable service should be ok!', function(done){
-			var config = require('./config/scheduler.json');
-			app.set('schedulerServiceConfig', config);
-			//console.log('schedulerConfig  ' + JSON.stringify(config));
-			app.enable('schedulerService');
-			var result = app.enabled('schedulerService');
-			result.should.be.ok;
+				afterStart: function(cb) {
+					afterStartCount++;
+					cb();
+				}, 
 
-			app.disable('schedulerService');
-			result = app.enabled('schedulerService');
-			result.should.not.be.ok;
-			done();
-    });
+				stop: function(force, cb) {
+					stopCount++;
+					cb();
+				}
+			};
 
-    // it('before call should be ok!', function(done){
-    //     app.before('\*use', function(msg,session){return -1;});
-    //     done();
-    // });
+			app.init();
+			app.set('base', process.cwd() + '/test');
+			app.defaultConfiguration();
+			app.load(mockComponent);
+			app.start(function(err) {
+				should.not.exist(err);
+			});
 
-    it('configure call should be work !', function(done){
-        app.set('env', 'development');
+			setTimeout(function() {
+				// wait for after start
+				app.stop(false);
 
-        var callCount = 0;
-        var devResult = false;
-        app.configure('development', function(){
-            callCount += 1;
-            devResult = true;
-        });
-        app.configure('production', function(){
-            callCount +=3;
-            devResult = false;
-        });
-        app.configure('production', function(){
-            callCount += 5;
-        });
+				setTimeout(function() {
+					// wait for stop
+					startCount.should.equal(1);
+					afterStartCount.should.equal(1);
+					stopCount.should.equal(1);
+					done();
+				}, WAIT_TIME);
+			}, WAIT_TIME);
+		});
 
-        devResult.should.be.ok;
+		it('should access the component with a name by app.components.name after loaded', function() {
+			var key1 = 'key1', comp1 = {content: 'some thing in comp1'};
+			var comp2 = {name: 'key2', content: 'some thing in comp2'};
+			var key3 = 'key3';
+			var comp3 = function() {
+				return {content: 'some thing in comp3', name: key3};
+			};
 
-        app.configure('development|production', function(){
-            callCount += 7;
-            devResult = false;
-        });
+			app.init();
+			app.load(key1, comp1);
+			app.load(comp2);
+			app.load(comp3);
 
-        devResult.should.not.ok;
-        callCount.should.equal(8);
+			app.components.key1.should.eql(comp1);
+			app.components.key2.should.eql(comp2);
+			app.components.key3.should.eql(comp3());
+		});
+	});
 
-        done();
-    });
+	describe('#configure', function() {
+		it('should execute the code block wtih the right environment', function() {
+			var proCount = 0, devCount = 0;
+			var proEnv = 'production', devEnv = 'development', serverType = 'server';
 
-    // it('gen handler should be ok!', function(done){
-    //     app.genHandler('area',  __dirname + '/config/area/handler');
-    //     should.exist(app.get('handlerMap'));
-    //     console.log('appTest genHandler: ' + JSON.stringify(app.get('handlerMap')));
-    //     should.exist(app.get('handlerMap').area, 'handler.area should exists!');
+			app.init();
+			app.set('serverType', serverType);
+			app.set('env', proEnv);
 
-    //     var userHandler = app.get('handlerMap').area.userHandler;
+			app.configure(proEnv, serverType, function() {
+				proCount++;
+			});
 
-    //     var result = userHandler.move();
+			app.configure(devEnv, serverType, function() {
+				devCount++;
+			});
 
-    //     result.should.be.ok;
+			app.set('env', devEnv);
 
-    //     done();
-    // });
+			app.configure(proEnv, serverType, function() {
+				proCount++;
+			});
 
-    // it('gen remote should be ok!', function(done){
-    //     app.genRemote('area',  __dirname + '/config/area/remote');
-    //     should.exist(app.get('remoteMap'));
-    //     should.exist(app.get('remoteMap').user.area.userService);
+			app.configure(devEnv, serverType, function() {
+				devCount++;
+			});
 
-    //     var userService = app.get('remoteMap').user.area.userService;
-    //     var result = userService.userLeave();
-    //     result.should.not.be.ok;
+			proCount.should.equal(1);
+			devCount.should.equal(1);
+		});
 
-    //     done();
-    // });
+		it('should execute the code block wtih the right server', function() {
+			var server1Count = 0, server2Count = 0;
+			var proEnv = 'production', serverType1 = 'server1', serverType2 = 'server2';
 
-    // it('gen proxy should be ok!', function(done){
-    //     app.genProxy('area',  __dirname + '/config/area/remote');
-    //     should.exist(app.get('proxyMap'));
-    //     //should.exist(app.get('proxyMap').user.area.treasureService, 'tresureService should exists');
-    //     should.exist(app.get('proxyMap').user.area.userService, 'user service should exist');
+			app.init();
+			app.set('serverType', serverType1);
+			app.set('env', proEnv);
 
-    //     console.log('proxymap: ' + JSON.stringify(app.get('proxyMap')));
+			app.configure(proEnv, serverType1, function() {
+				server1Count++;
+			});
 
-    //     var userService = app.get('proxyMap').user.area.userService;
+			app.configure(proEnv, serverType2, function() {
+				server2Count++;
+			});
 
-    //     app.set('mailRouter', {
-    //         route: function(params, callback){
-    //             return false;
-    //         }
-    //     });
-    //     userService.userLeave();
-    //     done();
-    // });
+			app.set('serverType', serverType2);
 
-    it('find server should be ok!', function(done){
-        app.set('env', 'production');
-        app.set('servers', __dirname+'/config/servers.json');
+			app.configure(proEnv, serverType1, function() {
+				server1Count++;
+			});
 
-        //console.log('app.servers: '+JSON.stringify(app.get('servers')));
+			app.configure(proEnv, serverType2, function() {
+				server2Count++;
+			});
 
-        var server = app.findServer('logic', 'logic-server-2');
-        should.exist(server);
-        server.id.should.equal('logic-server-2');
-
-        try {
-            app.findServer('wrong', 'haha');
-        }
-        catch (error){
-        	should.exist('error');
-        }
-        done();
-    });
-
+			server1Count.should.equal(1);
+			server2Count.should.equal(1);
+		});
+	});
 });
