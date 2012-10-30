@@ -19,7 +19,7 @@
         var port = "3010"; 
         function show() {
               pomelo.init({host: host, port: port, log: true}, function() {
-              pomelo.request({route:"connector.entryHandler.entry"}, function (data) {
+              pomelo.request("hello", "connector.entryHandler.entry", function (data) {
                  alert(data.msg); 
              });
           });
