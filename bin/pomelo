@@ -23,7 +23,7 @@ var IF_HOME = utils.endsWith(CUR_DIR,'game-server');
 var IF_WORKSPACE = fs.existsSync('./app.js')||fs.existsSync('game-server/app.js'); 
 var FOREVER = fs.existsSync('/usr/local/bin/forever');
 var HOME = IF_HOME ? CUR_DIR : CUR_DIR+'/game-server';
-var LOGS_DIR =  IF_HOME ? CUR_DIR+'/../logs/' :  CUR_DIR+ '/logs/';
+var LOGS_DIR =  IF_HOME ? CUR_DIR+'/logs/' :  CUR_DIR+ '/game-server/logs/';
 var MASTER_CONFIG = HOME + '/config/master.json';
 var KILL_CMD = 'kill -9 `ps -ef|grep "node ' + HOME + '/app.js' + '"|awk \'{print $2}\'`';
 var TMP_FILE = LOGS_DIR + 'tmp';
@@ -156,7 +156,7 @@ function createApplicationAt(path) {
     }
 
     copy(__dirname + '/../template/', path);
-    mkdir(path + '/logs/forever', 0);
+    mkdir(path + '/game-server/logs/forever', 0);
     mkdir(path + '/shared', 0);
     setTimeout(function () {
         var repalcefile = [path + '/game-server/app.js', path + '/game-server/package.json', path + '/web-server/package.json'];
@@ -164,6 +164,10 @@ function createApplicationAt(path) {
             var str = fs.readFileSync(repalcefile[i]).toString();
             fs.writeFileSync(repalcefile[i], str.replace('$', name));
         }
+        var f = path + '/game-server/package.json';
+        var content = fs.readFileSync(f).toString();
+        fs.writeFileSync(f, content.replace('#', version));
+ 
     }, TIME_INIT);
 }
 
@@ -255,11 +259,54 @@ function list() {
                     abort(CONNECT_ERROR);
                 } 
                 else {
-                        client.request('nodeInfo', null, function(err, msg) {
+                    client.request('nodeInfo', null, function(err, msg) {
                         if(err) {
                           abort(NODEINFO_ERROR);
                         }
-                        utils.pomelo_list_format_output(msg);
+                        var str = 'serverId                  serverType             pid            cpuAvg        memAvg        time';
+                        console.log(str);
+                        
+                        for(var key in msg){
+                            var temp = [];
+                            for(var i=0;i<str.length;i++){
+                                temp.push('_');
+                            }
+                            var result = temp;
+                            var k=0;
+                            var str_tem = msg[key]['serverId'].toString();
+                            
+                            for(var j=0;j<str_tem.length;j++){
+                                result[k+j] = str_tem[j];
+                            }
+                            k='serverId                  '.length;
+                            str_tem = msg[key]['serverType'].toString();
+                            for(var j=0;j<str_tem.length;j++){
+                                result[k+j] = str_tem[j];
+                            }
+                            k='serverId                  serverType             '.length;
+                            str_tem = msg[key]['pid'].toString();
+                            for(var j=0;j<str_tem.length;j++){
+                                result[k+j] = str_tem[j];
+                            }
+                            k='serverId                  serverType             pid            '.length;
+                            str_tem = msg[key]['cpuAvg'].toString();
+                            for(var j=0;j<str_tem.length;j++){
+                                result[k+j] = str_tem[j];
+                            }     
+                            k='serverId                  serverType             pid            cpuAvg        '.length;
+                            str_tem = msg[key]['memAvg'].toString();
+                            for(var j=0;j<str_tem.length;j++){
+                                result[k+j] = str_tem[j];
+                            }
+                            k='serverId                  serverType             pid            cpuAvg        memAvg        '.length;
+                            str_tem = msg[key]['time'].toString();
+                            for(var j=0;j<str_tem.length;j++){
+                                result[k+j] = str_tem[j];
+                            }
+                            result = result.join('');
+                            result = result.replace(/_/g," ");
+                            console.log(result);
+                        }
                         process.exit(1);
                     });
                 }
