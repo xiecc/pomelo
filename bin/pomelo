@@ -156,7 +156,7 @@ function createApplicationAt(path) {
     }
 
     copy(__dirname + '/../template/', path);
-    mkdir(path + '/logs/forever', 0);
+    mkdir(path + '/game-server/logs/forever', 0);
     mkdir(path + '/shared', 0);
     setTimeout(function () {
         var repalcefile = [path + '/game-server/app.js', path + '/game-server/package.json', path + '/web-server/package.json'];
