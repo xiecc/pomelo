@@ -458,7 +458,7 @@ function copy(origin, target) {
             var tCurrent = target + '/' + datalist[i];
             if (fs.statSync(oCurrent).isFile()) {
                 fs.writeFileSync(tCurrent, fs.readFileSync(oCurrent, ''), '');
-                console.log('Create file: ' + oCurrent);
+                console.log('Create file: ' + tCurrent);
             }
             else if (fs.statSync(oCurrent).isDirectory()) {
                 copy(oCurrent, tCurrent);
