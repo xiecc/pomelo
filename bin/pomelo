@@ -367,7 +367,6 @@ function terminal(signal) {
                             abort(STOPSERVER_ERROR);
                         }
                         setTimeout(function () {
-                          
                                 exec(KILL_CMD);
                                 fs.unlinkSync(TMP_FILE);
                                 process.exit(1);
