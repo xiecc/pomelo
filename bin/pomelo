@@ -231,8 +231,7 @@ function start() {
              else 
                  abort(INSTALLFOREVER_ERROR);
         }
-        //reserve the child process pid and start mode
-        fs.writeFile(TMP_FILE, mode+':'+ls.pid+':'+DEAMON);
+        fs.writeFile(TMP_FILE, mode + ':' + DEAMON);
     }
     else {
         abort(NOWORKSPACE_ERROR);
@@ -359,7 +358,7 @@ function terminal(signal) {
                             abort(STOPSERVER_ERROR);
                         }
                         setTimeout(function () {
-                                if (data.toString().split(':')[2] == 'true') {
+                                if (data.toString().split(':')[1] == 'true') {
                                     if (IF_HOME)
                                         exec('forever stop app.js');
                                     else
