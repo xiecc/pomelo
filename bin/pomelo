@@ -331,14 +331,23 @@ function terminal(signal) {
             var client = new adminClient();
             MASTER_JSON = require(MASTER_CONFIG);
             var config = MASTER_JSON[data.toString().split(':')[0]];
-            if(args.length > 1 || args[0] !== '--force'){
+            if(args.length > 1 || (args.length === 1 && args[0] !== '--force')){
                 abort(COMMAND_ERROR);
             }
             console.info(CLOSEAPP_INFO);
-            if(args[0] === '--force'){
-             setTimeout(function () {
-                 exec(KILL_CMD);
-                 process.exit(1);
+            if (data.toString().split(':')[1] == 'true') {
+                 setTimeout(function () {
+                    if (IF_HOME)
+                       exec('forever stop app.js');
+                    else
+                       exec('cd game-server && forever stop app.js');
+                    process.exit(1);
+                 }, TIME_KILL_WAIT);
+            }
+           if(args[0] === '--force'){
+               setTimeout(function () {
+                    exec(KILL_CMD);
+                    process.exit(1);
                }, TIME_KILL_WAIT);
             }
             var id = 'pomelo_terminal_' + Date.now();
@@ -358,12 +367,7 @@ function terminal(signal) {
                             abort(STOPSERVER_ERROR);
                         }
                         setTimeout(function () {
-                                if (data.toString().split(':')[1] == 'true') {
-                                    if (IF_HOME)
-                                        exec('forever stop app.js');
-                                    else
-                                        exec('cd game-server && forever stop app.js');
-                                }
+                          
                                 exec(KILL_CMD);
                                 fs.unlinkSync(TMP_FILE);
                                 process.exit(1);
