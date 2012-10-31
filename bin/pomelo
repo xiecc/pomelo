@@ -103,7 +103,6 @@ var version = pkg.version;
             terminal('stop');
             break;
         case 'kill':
-            legalArgNum(0);
             terminal('kill');
             break;
         default:
@@ -333,7 +332,16 @@ function terminal(signal) {
             var client = new adminClient();
             MASTER_JSON = require(MASTER_CONFIG);
             var config = MASTER_JSON[data.toString().split(':')[0]];
+            if(args.length > 1 || args[0] !== '--force'){
+                abort(COMMAND_ERROR);
+            }
             console.info(CLOSEAPP_INFO);
+            if(args[0] === '--force'){
+             setTimeout(function () {
+                 exec(KILL_CMD);
+                 process.exit(1);
+               }, TIME_KILL_WAIT);
+            }
             var id = 'pomelo_terminal_' + Date.now();
             client.connect(id, config.host, config.port, function (err) {
                 if (err) {
