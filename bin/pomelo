@@ -35,7 +35,7 @@ var DEM = '--daemon';
 var FOREVER_ARGS = '-o ' + LOGS_DIR + 'forever/out.log -e ' + LOGS_DIR + 'forever/err.log';
 var NOWORKSPACE_ERROR = 'Please go to your pomelo project workspace to start the application.';
 var COMMAND_ERROR = 'The command is error format.';
-var NORUNNING_ERROR = 'There is no running program.';
+var NORUNNING_ERROR = 'There is no running program in current directory.';
 var INSTALLFOREVER_ERROR = 'Please install forever use command: npm install forever -g.';
 var CONNECT_ERROR =  'Fail to connect to admin console server.';
 var NODEINFO_ERROR = 'Fail to request node information.';
@@ -57,7 +57,7 @@ var usage = ''
         + '    start [option]            start the application\n'
         + '    list                      list server information\n'
         + '    stop                      stop the application\n'
-        + '    kill                      kill the application\n'
+        + '    kill  [--force]           kill the application\n'
         + '    version                   output framework version\n'
         + '    help                      output help information\n'
         + '    [option]                  developement(default)/production --daemon' 
@@ -103,7 +103,6 @@ var version = pkg.version;
             terminal('stop');
             break;
         case 'kill':
-            legalArgNum(0);
             terminal('kill');
             break;
         default:
@@ -232,8 +231,7 @@ function start() {
              else 
                  abort(INSTALLFOREVER_ERROR);
         }
-        //reserve the child process pid and start mode
-        fs.writeFile(TMP_FILE, mode+':'+ls.pid+':'+DEAMON);
+        fs.writeFile(TMP_FILE, mode + ':' + DEAMON);
     }
     else {
         abort(NOWORKSPACE_ERROR);
@@ -333,7 +331,25 @@ function terminal(signal) {
             var client = new adminClient();
             MASTER_JSON = require(MASTER_CONFIG);
             var config = MASTER_JSON[data.toString().split(':')[0]];
+            if(args.length > 1 || (args.length === 1 && args[0] !== '--force')){
+                abort(COMMAND_ERROR);
+            }
             console.info(CLOSEAPP_INFO);
+            if (data.toString().split(':')[1] == 'true') {
+                 setTimeout(function () {
+                    if (IF_HOME)
+                       exec('forever stop app.js');
+                    else
+                       exec('cd game-server && forever stop app.js');
+                    process.exit(1);
+                 }, TIME_KILL_WAIT);
+            }
+           if(args[0] === '--force'){
+               setTimeout(function () {
+                    exec(KILL_CMD);
+                    process.exit(1);
+               }, TIME_KILL_WAIT);
+            }
             var id = 'pomelo_terminal_' + Date.now();
             client.connect(id, config.host, config.port, function (err) {
                 if (err) {
@@ -351,12 +367,6 @@ function terminal(signal) {
                             abort(STOPSERVER_ERROR);
                         }
                         setTimeout(function () {
-                                if (data.toString().split(':')[2] == 'true') {
-                                    if (IF_HOME)
-                                        exec('forever stop app.js');
-                                    else
-                                        exec('cd game-server && forever stop app.js');
-                                }
                                 exec(KILL_CMD);
                                 fs.unlinkSync(TMP_FILE);
                                 process.exit(1);
@@ -458,7 +468,7 @@ function copy(origin, target) {
             var tCurrent = target + '/' + datalist[i];
             if (fs.statSync(oCurrent).isFile()) {
                 fs.writeFileSync(tCurrent, fs.readFileSync(oCurrent, ''), '');
-                console.log('Create file: ' + oCurrent);
+                console.log('Create file: ' + tCurrent);
             }
             else if (fs.statSync(oCurrent).isDirectory()) {
                 copy(oCurrent, tCurrent);
