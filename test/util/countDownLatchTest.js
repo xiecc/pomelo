@@ -7,7 +7,6 @@ var cbCreator = (function(){
     return {
     	callback: function(){
             count++;
-    	    console.log('call back invoked, count: '+count);
     	}, 
     	getCount: function(){
         	return count;
@@ -30,7 +29,6 @@ describe('countDownLatchTest', function(){
     
     it('countdownLatch should be invoked callback 5 times', function(done){
         countDownLatch1.done();
-        console.log(' cbCreator.getCount(): '+cbCreator.getCount());
         should.exist(cbCreator.getCount());
         cbCreator.getCount().should.equal(0);
         countDownLatch1.done();
