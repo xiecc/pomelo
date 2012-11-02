@@ -25,6 +25,7 @@ var FOREVER = fs.existsSync('/usr/local/bin/forever');
 var HOME = IF_HOME ? CUR_DIR : CUR_DIR + '/game-server';
 var LOGS_DIR = IF_HOME ? CUR_DIR + '/logs/' : CUR_DIR + '/game-server/logs/';
 var MASTER_CONFIG = HOME + '/config/master.json';
+var FOREVER_ARGS = '-o ' + LOGS_DIR + 'forever/out.log -e ' + LOGS_DIR + 'forever/err.log';
 var KILL_CMD = 'kill -9 `ps -ef|grep "node ' + HOME + '/app.js' + '"|awk \'{print $2}\'`';
 var TMP_FILE = LOGS_DIR + 'tmp';
 var MASTER_JSON;
@@ -32,7 +33,6 @@ var MASTER_JSON;
 var DEV = 'development';
 var PRD = 'production';
 var DEM = '--daemon';
-var FOREVER_ARGS = '-o ' + LOGS_DIR + 'forever/out.log -e ' + LOGS_DIR + 'forever/err.log';
 var NOWORKSPACE_ERROR = 'Please go to your pomelo project workspace to start the application.';
 var COMMAND_ERROR = 'The command is error format.';
 var NORUNNING_ERROR = 'There is no running program in current directory.';
@@ -43,7 +43,6 @@ var STOPSERVER_ERROR = 'Fail to stop server.';
 var FILEREAD_ERROR = 'Fail to read the file.';
 var RUNDEAMON_INFO = 'Application run in daemon.\nStop the application use the command:pomelo stop.';
 var CLOSEAPP_INFO = 'Closing the application......\nPlease wait......';
-
 
 /**
  * Usage documentation.
@@ -103,7 +102,6 @@ var version = pkg.version;
  *
  * @param {String} path
  */
-
 function init(path) {
     emptyDirectory(path, function(empty) {
         if(empty) {
@@ -119,30 +117,23 @@ function init(path) {
             });
         }
     });
-}
+};
 
 /**
  * Create directory and files at the given directory `path`.
  *
  * @param {String} path
  */
-
 function createApplicationAt(path) {
     var name = path;
-    var cwd = CUR_DIR;
     if(path.indexOf('/') !== -1) {
         var str = path.split('/');
         name = str[str.length - 1];
+    } else {
+        var arr = CUR_DIR.split('/');
+        if(path === '.') name = arr[arr.length - 1];
+        if(path === '..') name = arr[arr.length - 2];
     }
-    if(path === '.') {
-        var arr = cwd.split('/');
-        name = arr[arr.length - 1];
-    }
-    if(path === '..') {
-        var arr = cwd.split('/');
-        name = arr[arr.length - 2];
-    }
-
     copy(__dirname + '/../template/', path);
     mkdir(path + '/game-server/logs/forever', 0);
     mkdir(path + '/shared', 0);
@@ -155,15 +146,13 @@ function createApplicationAt(path) {
         var f = path + '/game-server/package.json';
         var content = fs.readFileSync(f).toString();
         fs.writeFileSync(f, content.replace('#', version));
-
     }, TIME_INIT);
-}
+};
 
 /**
  * Start application.
  *
  */
-
 function start() {
     var mode = DEV;
     switch(args.length) {
@@ -202,45 +191,34 @@ function start() {
         } else {
             if(FOREVER) {
                 var cmd = 'forever start ' + FOREVER_ARGS + ' app.js env=' + mode;
-                if(!IF_HOME) {
-                    cmd = util.format('cd %s && ' + cmd, 'game-server');
-                }
+                if(!IF_HOME) cmd = util.format('cd %s && ' + cmd, 'game-server');
                 ls = exec(cmd);
                 console.info(RUNDEAMON_INFO);
             } else abort(INSTALLFOREVER_ERROR);
         }
         fs.writeFile(TMP_FILE, mode + ':' + DEAMON);
-    } else {
-        abort(NOWORKSPACE_ERROR);
-    }
-}
+    } else abort(NOWORKSPACE_ERROR);
+};
 
 /**
  * List pomelo processes.
  *
  */
-
 function list() {
     if(fs.existsSync(TMP_FILE)) {
         fs.readFile(TMP_FILE, function(err, data) {
-            if(err) {
-                abort(FILEREAD_ERROR);
-            }
+            if(err) abort(FILEREAD_ERROR);
             var client = new adminClient();
             MASTER_JSON = require(MASTER_CONFIG);
             var config = MASTER_JSON[data.toString().split(':')[0]];
             var id = 'pomelo_list_' + Date.now();
             client.connect(id, config.host, config.port, function(err) {
-                if(err) {
-                    abort(CONNECT_ERROR);
-                } else {
+                if(err) abort(CONNECT_ERROR);
+                else {
                     client.request('nodeInfo', null, function(err, msg) {
-                        if(err) {
-                            abort(NODEINFO_ERROR);
-                        }
+                        if(err) abort(NODEINFO_ERROR);
                         var str = 'serverId                  serverType             pid            cpuAvg        memAvg        time';
                         console.log(str);
-
                         for(var key in msg) {
                             var temp = [];
                             for(var i = 0; i < str.length; i++) {
@@ -249,7 +227,6 @@ function list() {
                             var result = temp;
                             var k = 0;
                             var str_tem = msg[key]['serverId'].toString();
-
                             for(var j = 0; j < str_tem.length; j++) {
                                 result[k + j] = str_tem[j];
                             }
@@ -287,10 +264,8 @@ function list() {
                 }
             });
         });
-    } else {
-        abort(NORUNNING_ERROR);
-    }
-}
+    } else abort(NORUNNING_ERROR);
+};
 
 /**
  * Terminal application.
@@ -298,19 +273,14 @@ function list() {
  * @param {String} signal stop/kill
  *
  */
-
 function terminal(signal) {
     if(fs.existsSync(TMP_FILE)) {
         fs.readFile(TMP_FILE, function(err, data) {
-            if(err) {
-                abort(FILEREAD_ERROR);
-            }
+            if(err) abort(FILEREAD_ERROR);
             var client = new adminClient();
             MASTER_JSON = require(MASTER_CONFIG);
             var config = MASTER_JSON[data.toString().split(':')[0]];
-            if(args.length > 1 || (args.length === 1 && args[0] !== '--force')) {
-                abort(COMMAND_ERROR);
-            }
+            if(args.length > 1 || (args.length === 1 && args[0] !== '--force')) abort(COMMAND_ERROR);
             console.info(CLOSEAPP_INFO);
             if(data.toString().split(':')[1] == 'true') {
                 setTimeout(function() {
@@ -320,14 +290,13 @@ function terminal(signal) {
                 }, TIME_KILL_WAIT);
             }
             if(args[0] === '--force') {
-                    exec(KILL_CMD);
-                    process.exit(1);
+                exec(KILL_CMD);
+                fs.unlinkSync(TMP_FILE);
+                process.exit(1);
             }
             var id = 'pomelo_terminal_' + Date.now();
             client.connect(id, config.host, config.port, function(err) {
-                if(err) {
-                    abort(CONNECT_ERROR);
-                }
+                if(err) abort(CONNECT_ERROR);
                 client.request('nodeInfo', null, function(err, msg) {
                     var pid = [];
                     var serverId = [];
@@ -340,9 +309,7 @@ function terminal(signal) {
                         pid: pid,
                         serverId: serverId
                     }, function(err, msg) {
-                        if(err) {
-                            abort(STOPSERVER_ERROR);
-                        }
+                        if(err) abort(STOPSERVER_ERROR);
                         setTimeout(function() {
                             exec(KILL_CMD);
                             fs.unlinkSync(TMP_FILE);
@@ -353,7 +320,7 @@ function terminal(signal) {
             });
         });
     } else abort(NORUNNING_ERROR);
-}
+};
 
 /**
  * Check if the given directory `path` is empty.
@@ -361,13 +328,12 @@ function terminal(signal) {
  * @param {String} path
  * @param {Function} fn
  */
-
 function emptyDirectory(path, fn) {
     fs.readdir(path, function(err, files) {
-        if(err && 'ENOENT' != err.code) throw err;
+        if(err && 'ENOENT' != err.code) abort(FILEREAD_ERROR);
         fn(!files || !files.length);
     });
-}
+};
 
 /**
  * Prompt confirmation with the given `msg`.
@@ -375,12 +341,11 @@ function emptyDirectory(path, fn) {
  * @param {String} msg
  * @param {Function} fn
  */
-
 function confirm(msg, fn) {
     prompt(msg, function(val) {
         fn(/^ *y(es)?/i.test(val));
     });
-}
+};
 
 /**
  * Prompt input with the given `msg` and callback `fn`.
@@ -388,44 +353,33 @@ function confirm(msg, fn) {
  * @param {String} msg
  * @param {Function} fn
  */
-
 function prompt(msg, fn) {
-    // prompt
-    if(' ' == msg[msg.length - 1]) {
-        process.stdout.write(msg);
-    } else {
-        console.log(msg);
-    }
-    // stdin
+    if(' ' == msg[msg.length - 1]) process.stdout.write(msg);
+    else console.log(msg);
     process.stdin.setEncoding('ascii');
     process.stdin.once('data', function(data) {
         fn(data);
     }).resume();
-}
+};
 
 /**
  * Exit with the given `str`.
  *
  * @param {String} str
  */
-
 function abort(str) {
     console.error(str);
     process.exit(1);
-}
+};
 
 /**
- * Judge whether the number of arguments is legal.
+ * Check whether the number of arguments is legal.
  *
  * @param {Number} argNum
  */
-
 function legalArgNum(argNum) {
-    if(args.length != argNum) {
-        console.error(COMMAND_ERROR);
-        process.exit(1);
-    }
-}
+    if(args.length != argNum) abort(COMMAND_ERROR);
+};
 
 /**
  * Copy template files to project.
@@ -433,65 +387,49 @@ function legalArgNum(argNum) {
  * @param {String} origin
  * @param {String} target
  */
-
 function copy(origin, target) {
-    if(!fs.existsSync(origin)) {
-        console.log(origin + 'is not exist......');
-    }
+    if(!fs.existsSync(origin)) abort(origin + 'is not exist.');
     if(!fs.existsSync(target)) {
         mkdir(target, 0);
         console.log('Make dir: ' + target);
     }
     fs.readdir(origin, function(err, datalist) {
-        if(err) return;
+        if(err) abort(FILEREAD_ERROR);
         for(var i = 0; i < datalist.length; i++) {
             var oCurrent = origin + '/' + datalist[i];
             var tCurrent = target + '/' + datalist[i];
             if(fs.statSync(oCurrent).isFile()) {
                 fs.writeFileSync(tCurrent, fs.readFileSync(oCurrent, ''), '');
                 console.log('Create file: ' + tCurrent);
-            } else if(fs.statSync(oCurrent).isDirectory()) {
-                copy(oCurrent, tCurrent);
-            }
+            } else if(fs.statSync(oCurrent).isDirectory()) copy(oCurrent, tCurrent);
         }
     });
-}
+};
 
 /**
  * Make directory for new project.
  *
  * @param {String} path
  * @param {Number} mode
- * @param {Function} cb
  */
-
-function mkdir(url, mode, cb) {
-
-    var arr = url.split("/");
+function mkdir(url, mode) {
+    var arr = url.split('/');
     mode = mode || 0755;
-    cb = cb ||
-    function() {};
-    if(arr[0] == ".") {
+    switch(arr[0]) {
+    case '.':
         arr.shift();
-    }
-    if(arr[0] == "..") {
-        arr.splice(0, 2, arr[0] + "/" + arr[1]);
-    }
-    if(arr[0] == "") {
+        break;
+    case '..':
+        arr.splice(0, 2, arr[0] + '/' + arr[1]);
+        break;
+    case '':
         arr[0] = "/";
-    }
-
+        break;
+    };
     function inner(cur) {
-        if(!fs.existsSync(cur)) {
-            fs.mkdirSync(cur, mode);
-        }
-        if(arr.length) {
-            inner(cur + "/" + arr.shift());
-        } else {
-            cb();
-        }
+        if(!fs.existsSync(cur)) fs.mkdirSync(cur, mode);
+        if(arr.length) inner(cur + '/' + arr.shift());
     }
-
     arr.length && inner(arr.shift());
     console.log('Make dir: ' + url);
-}
+};
