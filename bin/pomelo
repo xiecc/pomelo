@@ -320,10 +320,8 @@ function terminal(signal) {
                 }, TIME_KILL_WAIT);
             }
             if(args[0] === '--force') {
-                setTimeout(function() {
                     exec(KILL_CMD);
                     process.exit(1);
-                }, TIME_KILL_WAIT);
             }
             var id = 'pomelo_terminal_' + Date.now();
             client.connect(id, config.host, config.port, function(err) {
