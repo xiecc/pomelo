@@ -1,17 +1,17 @@
 var should = require('should');
 var pomelo = require('../../');
-var channelManager = require('../../lib/common/service/channelManager');
+var channelService = require('../../lib/common/service/channelService');
 
 var channelName = 'test_channel';
 
 describe('channel manager test', function() {
 	afterEach(function() {
-		channelManager.destroyChannel(channelName);
+		channelService.destroyChannel(channelName);
 	});
 
 	describe('createChannel', function() {
 		it('should create and return a channel with the specified name', function() {
-			var channel = channelManager.createChannel(channelName);
+			var channel = channelService.createChannel(channelName);
 			should.exist(channel);
 			channelName.should.equal(channel.name);
 		});
@@ -19,19 +19,19 @@ describe('channel manager test', function() {
 
 	describe('getChannel', function() {
 		it('should return the channel with the specified name if it exists', function() {
-			channelManager.createChannel(channelName);
-			var channel = channelManager.getChannel(channelName);
+			channelService.createChannel(channelName);
+			var channel = channelService.getChannel(channelName);
 			should.exist(channel);
 			channelName.should.equal(channel.name);
 		});
 
 		it('should return undefined if the channel dose not exist', function() {
-			var channel = channelManager.getChannel(channelName);
+			var channel = channelService.getChannel(channelName);
 			should.not.exist(channel);
 		});
 
 		it('should create and return a new channel if create parameter is set', function() {
-			var channel = channelManager.getChannel(channelName, true);
+			var channel = channelService.getChannel(channelName, true);
 			should.exist(channel);
 			channelName.should.equal(channel.name);
 		});
@@ -69,7 +69,7 @@ describe('channel manager test', function() {
 			var app = pomelo.createApp();
 			app.rpcInvoke = mockRpcInvoke;
 
-			channelManager.pushMessageByUids(mockMsg, mockUids, function() {
+			channelService.pushMessageByUids(mockMsg, mockUids, function() {
 				invokeCount.should.equal(2);
 				done();
 			});
