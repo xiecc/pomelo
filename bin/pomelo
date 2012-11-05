@@ -270,23 +270,22 @@ function list() {
 function terminal(signal) {
     if(args.length > 1 || (args.length === 1 && args[0] !== '--force')) abort(COMMAND_ERROR);
     if(IF_WORKSPACE) {
+        console.info(CLOSEAPP_INFO);
+        if(args[0] === '--force') {
+                exec(KILL_CMD);
+                process.exit(1);
+        }
         fs.readFile(TMP_FILE, function(err, data) {
             if(err) abort(FILEREAD_ERROR);
             var client = new adminClient();
             MASTER_JSON = require(MASTER_CONFIG);
             var config = MASTER_JSON[data.toString().split(':')[0]];
-            console.info(CLOSEAPP_INFO);
             if(data.toString().split(':')[1] == 'true') {
                 setTimeout(function() {
                     if(IF_HOME) exec('forever stop app.js');
                     else exec('cd game-server && forever stop app.js');
                     process.exit(1);
                 }, TIME_KILL_WAIT);
-            }
-            if(args[0] === '--force') {
-                exec(KILL_CMD);
-                fs.unlinkSync(TMP_FILE);
-                process.exit(1);
             }
             var id = 'pomelo_terminal_' + Date.now();
             client.connect(id, config.host, config.port, function(err) {
@@ -315,6 +314,7 @@ function terminal(signal) {
         });
     } else abort(NOWORKSPACE_ERROR);
 };
+
 /**
  * Check if the given directory `path` is empty.
  *
