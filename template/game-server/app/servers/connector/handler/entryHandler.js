@@ -15,5 +15,5 @@ var Handler = function(app) {
  * @return {Void}
  */
 Handler.prototype.entry = function(msg, session, next) {
-      next(null, {code: 200, msg: 'hello,pomelo!'});
+      next(null, {code: 200, msg: 'game server is ok.'});
 };
