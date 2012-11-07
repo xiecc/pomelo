@@ -7,7 +7,8 @@ var fs = require('fs'),
     cp = require('child_process'),
     exec = cp.exec,
     spawn = cp.spawn,
-    adminClient = require('pomelo-admin').adminClient,
+    adminClient = require('pomelo-admin').adminClient, 
+    stop = require('../lib/modules/stop');
     utils = require('../lib/util/utils'),
     util = require('util');
 
@@ -297,7 +298,7 @@ function terminal(signal) {
                         pid.push(msg[id]['pid']);
                         serverId.push(msg[id]['serverId']);
                     }
-                    client.request('serverStop', {
+                    client.request(stop.moduleId, {
                         signal: signal,
                         pid: pid,
                         serverId: serverId
