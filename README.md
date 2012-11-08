@@ -32,9 +32,6 @@ With the following references, we can quickly familiar the pomelo development pr
 You can also learn from our MMO demo:
 * [an introduction to demo --- lord of pomelo](https://github.com/NetEase/pomelo/wiki/Introduction-to--Lord-of-Pomelo)
 
-The home of all references:
-* [Home of pomelo](https://github.com/NetEase/pomelo/wiki)
-
 
 ## License
 
