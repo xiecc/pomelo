@@ -1,57 +1,39 @@
 ## pomelo - a Short Description
-
-Fast, scalable game server framework for  [node](http://nodejs.org).
-Pomelo provides a full stack of game(especially MMO) server development infrastructure, including framework, libraries and tools.
-
-  * Homepage: http://nodejs.netease.com/pomelo
-  * Mailing list: http://groups.google.com/group/pomelo
-  * Documentation: http://node.js.netease.com/pomelo/doc
-  * go to [main site](http://nodejs.netease.com/pomelo) for more information
-  * Wiki: http://github.com/node-pomelo/pomelo/wiki
-  * Issues: http://github.com/node-pomelo/pomelo/issues
-  * Tags: node.js, game, pomelo
-
-## Viewing demos
-
- * Visit the [online demo game](http://nodejs.netease.com/lordofpomelo)
- * or you can visit [demo game github](http://github.com/node-pomelo/lordofpomelo)to get the source code and install it on your local machine.
+Pomelo is a fast, scalable game server framework for [node.js](http://nodejs.org).
+It provides the basic development framework and a lot of related components, including libraries and tools. 
+Pomelo is also suitable for realtime web application, its distributed architecture makes pomelo scales better than other realtime web framework.
 
 ## Features
 
-  * Built on [socket.io] (https://github.com/LearnBoost/socket.io.git)
-  * Scalable multi-process architecture, area based partition
-  * Easy to scale and extend servers, almost zero config for adding new type of servers
-  * Easy client server communication, zero config for client server request and response with websocket
-  * Easy channel management and api for broadcasting, multicasting
-  * Simple rpc framework for communication between multiple servers, zero config
-  * Focus on scalability and high performance,  proved handling more than 2000 online users each area, with real world MMO logic, each request less than 200ms.
-  * Full stack of libraries for MMO game development, including ai, aoi(area of interest), scheduler, data-sync, etc.
-  * Admin console for managing servers, online users and performance profiler etc.
+* High scalable multi-process architecture, supporting MMO based area partition and other partition strategies
+* Easy extention mechnisam, you can scale up your server types and server instances conveniently.
+* Easy request, response, broadcast and rpc mechnisam, almost zero configuration.
+* Focus on performance, a lot of stress testing and tune in performance and scalability
+* Providing a lot tools and libraries, which are quite useful for game development.
+* Providing full MMO demo code(html5 client), for good development reference.
+* Based on socket.io, which means it can support all the clients that compatible with socket.io.
 
-## Installation
-  $ npm install -g pomelo
+## Why should you use pomelo?
+Fast, scalable, realtime game server development is not an easy job. A good container or framework can reduce the complexity.
+Unfortunately, not like web, the game server framework solution is quite rare, especially open source. Pomelo will fill this blank, providing a full solution for building game server framework.
+The following are the advantages:
+* The architecture is scalable. It uses multi-process, single thread runtime architecture, which has been proved in industry and  especially suitable for node.js thread model.
+* Easy to use, the development model is quite similiar to web, using convention over configuration, almost zero config. The api is also easy to use.
+* The framework is extensible. Based on node.js micro module principle, the core of pomelo is small. All the components, libraries and tools are individual npm modules, anyone can create their own module to extend the framework.
+* The reference is quite complete, we have complete documents.Besides documents, we also provide a full open source MMO demo(html5 client), which is a far more better reference than any books.
 
-## QuickStart
+## How to develop with pomelo?
+With the following references, we can quickly familiar the pomelo development process:
+* [the architecture overview of pomelo](https://github.com/NetEase/pomelo/wiki/Architecture-overview-of-pomelo)
+* [quick start guide](https://github.com/NetEase/pomelo/wiki/Quick-start-guide)
+* [tutoiral](https://github.com/NetEase/pomelo/wiki/Tutorial)
+* [FAQ](https://github.com/NetEase/pomelo/wiki/FAQ)
 
-The quickest way to get started with pomelo is to utilize the executable `pomelo` to generate an application as shown below:
+You can also learn from our MMO demo:
+* [an introduction to demo --- lord of pomelo](https://github.com/NetEase/pomelo/wiki/Introduction-to--Lord-of-Pomelo)
 
- Create the app:
-
-  $ npm install -g pomelo
-  $ pomelo init /tmp/foo && cd /tmp/foo
-
- Install dependencies:
-
-  $ npm install -d
-
- Start the servers:
-
-  $ pomelo start
-
- Stop the servers:
-
-  $ pomelo stop
-
+The home of all references:
+* [Home of pomelo](https://github.com/NetEase/pomelo/wiki)
 
 
 ## License
