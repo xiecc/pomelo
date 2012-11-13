@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8' />
+    <title>pomelo API</title>
+    <meta http-equiv='content-type' content='text/html' />
+    <meta http-equiv='content-style-type' content='text/css' />
+    <meta http-equiv='content-script-type' content='text/javascript' />
+    <meta name='author' content='netease' />
+    <meta name='version' content='1.0' />
+    <meta name='keywords' content='' />
+    <meta name='description' content='' />
+
+    <link type='text/css' rel='stylesheet' href='css/base.css'>
+    <link type='text/css' rel='stylesheet' href='css/api.css'>
+
+    <script>
+      var raw = [{"id":"45-1352798861991","name":"Pomelo","signiture":"Pomelo","type":"declaration","ctx":{"type":"declaration","name":"Pomelo","value":"module.exports = {}","string":"Pomelo"},"description":{"full":"<p>Expose <code>createApplication()</code>.</p>","summary":"<p>Expose <code>createApplication()</code>.</p>","body":""},"full_description":"<p>Expose <code>createApplication()</code>.</p>","code":"var Pomelo = module.exports = {};","params":[],"has_params":false,"tags":[{"type":"module","string":""}],"module":true,"related":{"href":""},"has_related":true,"methods":[{"id":"49-1352798861991","name":"createApp","signiture":"Pomelo.createApp()","type":"method","ctx":{"type":"method","receiver":"Pomelo","name":"createApp","string":"Pomelo.createApp()"},"description":{"full":"<p>Create an pomelo application.</p>","summary":"<p>Create an pomelo application.</p>","body":""},"full_description":"<p>Create an pomelo application.</p>","code":"Pomelo.createApp = function () {\n    var app = application;\n    app.stack = [].slice.apply(arguments);\n    app.init();\n    self.app = app;\n    return app;\n};","params":[],"has_params":false,"tags":[{"type":"return","types":["Application"],"description":""},{"type":"memberOf","parent":"Pomelo"},{"type":"api","visibility":"public"}],"module":false,"parent":"Pomelo","related":{"href":""},"has_related":true}]},{"id":"71-1352798861991","name":"ChannelService","signiture":"ChannelService()","type":"function","ctx":{"type":"function","name":"ChannelService","string":"ChannelService()"},"description":{"full":"<p>Create and maintain channels.</p>","summary":"<p>Create and maintain channels.</p>","body":""},"full_description":"<p>Create and maintain channels.</p>","code":"var ChannelService = function(app) {\n\tthis.app = app;\n\tthis.channels = {};\n};\n\nmodule.exports = ChannelService;","params":[],"has_params":false,"tags":[{"type":"module","string":""}],"module":true,"related":{"href":""},"has_related":true,"methods":[{"id":"72-1352798861991","name":"createChannel","signiture":"ChannelService.prototype.createChannel()","type":"method","ctx":{"type":"method","constructor":"ChannelService","cons":"ChannelService","name":"createChannel","string":"ChannelService.prototype.createChannel()"},"description":{"full":"<p>Create channel with name.</p>","summary":"<p>Create channel with name.</p>","body":""},"full_description":"<p>Create channel with name.</p>","code":"ChannelService.prototype.createChannel = function(name) {\n\tif(!!this.channels[name]) {\n\t\treturn this.channels[name];\n\t}\n\n\tvar c = new Channel(name, this);\n\tthis.channels[name] = c;\n\treturn c;\n};","params":[{"type":"param","types":["String"],"name":"name","description":"channel's name"}],"has_params":true,"tags":[{"type":"param","types":["String"],"name":"name","description":"channel's name"},{"type":"memberOf","parent":"ChannelService"}],"module":false,"parent":"ChannelService","related":{"href":""},"has_related":true},{"id":"73-1352798861991","name":"getChannel","signiture":"ChannelService.prototype.getChannel()","type":"method","ctx":{"type":"method","constructor":"ChannelService","cons":"ChannelService","name":"getChannel","string":"ChannelService.prototype.getChannel()"},"description":{"full":"<p>Get channel by name.</p>","summary":"<p>Get channel by name.</p>","body":""},"full_description":"<p>Get channel by name.</p>","code":"ChannelService.prototype.getChannel = function(name, create) {\n\tvar channel = this.channels[name];\n\tif(!channel && !!create) {\n\t\tchannel = this.channels[name] = new Channel(name, this);\n\t}\n\treturn channel;\n};","params":[{"type":"param","types":["String"],"name":"name","description":"channel's name"},{"type":"param","types":["Boolean"],"name":"create","description":"if true, create channel"}],"has_params":true,"tags":[{"type":"param","types":["String"],"name":"name","description":"channel's name"},{"type":"param","types":["Boolean"],"name":"create","description":"if true, create channel"},{"type":"return","types":["Channel"],"description":""},{"type":"memberOf","parent":"ChannelService"}],"module":false,"parent":"ChannelService","related":{"href":""},"has_related":true},{"id":"74-1352798861991","name":"destroyChannel","signiture":"ChannelService.prototype.destroyChannel()","type":"method","ctx":{"type":"method","constructor":"ChannelService","cons":"ChannelService","name":"destroyChannel","string":"ChannelService.prototype.destroyChannel()"},"description":{"full":"<p>Destroy channel by name.</p>","summary":"<p>Destroy channel by name.</p>","body":""},"full_description":"<p>Destroy channel by name.</p>","code":"ChannelService.prototype.destroyChannel = function(name) {\n\tdelete this.channels[name];\n};","params":[{"type":"param","types":["String"],"name":"name","description":"channel' name"}],"has_params":true,"tags":[{"type":"param","types":["String"],"name":"name","description":"channel' name"},{"type":"memberOf","parent":"ChannelService"}],"module":false,"parent":"ChannelService","related":{"href":""},"has_related":true},{"id":"75-1352798861991","name":"pushMessageByUids","signiture":"ChannelService.prototype.pushMessageByUids()","type":"method","ctx":{"type":"method","constructor":"ChannelService","cons":"ChannelService","name":"pushMessageByUids","string":"ChannelService.prototype.pushMessageByUids()"},"description":{"full":"<p>Push message by uids.<br />Group the uids by group. ignore any uid if sid not specified.</p>","summary":"<p>Push message by uids.<br />Group the uids by group. ignore any uid if sid not specified.</p>","body":""},"full_description":"<p>Push message by uids. Group the uids by group. ignore any uid if sid not specified.</p>","code":"ChannelService.prototype.pushMessageByUids = function(msg, uids, cb) {\n\tif(!uids || uids.length === 0) {\n\t\tutils.invokeCallback(cb, new Error('uids should not be empty'));\n\t\treturn;\n\t}\n\tvar groups = {}, record;\n\tfor(var i=0, l=uids.length; i<l; i++) {\n\t\trecord = uids[i];\n\t\tadd(record.uid, record.sid, groups);\n\t}\n\n\tsendMessageByGroup(this, msg, groups, cb);\n};","params":[{"type":"param","types":["Object"],"name":"msg","description":"message that would be sent to client"},{"type":"param","types":["Array"],"name":"uids","description":"[{uid: userId, sid: serverId}]"},{"type":"param","types":["Function"],"name":"cb","description":"cb(err)"}],"has_params":true,"tags":[{"type":"param","types":["Object"],"name":"msg","description":"message that would be sent to client"},{"type":"param","types":["Array"],"name":"uids","description":"[{uid: userId, sid: serverId}]"},{"type":"param","types":["Function"],"name":"cb","description":"cb(err)"},{"type":"memberOf","parent":"ChannelService"}],"module":false,"parent":"ChannelService","related":{"href":""},"has_related":true}]},{"id":"76-1352798861991","name":"Channel","signiture":"Channel()","type":"function","ctx":{"type":"function","name":"Channel","string":"Channel()"},"description":{"full":"<p>Channel  maintains a number of user informations: userId, serverId and their mapping. <br /><br />It is used to  broadcast message to users in the channel. </p>","summary":"<p>Channel  maintains a number of user informations: userId, serverId and their mapping. <br /><br />It is used to  broadcast message to users in the channel. </p>","body":""},"full_description":"<p>Channel  maintains a number of user informations: userId, serverId and their mapping.   It is used to  broadcast message to users in the channel. </p>","code":"var Channel = function(name, service) {\n\tthis.name = name;\n\tthis.groups = {};\t\t\t// group map for uids. key: sid, value: [uid]\n\tthis.records = {};\t\t\t// member records. key: uid\n\tthis.__channelService__ = service;\n\tthis.state = ST_INITED;\n};","params":[],"has_params":false,"tags":[{"type":"class","string":"channel"},{"type":"constructor","string":""}],"module":true,"related":{"href":""},"has_related":true,"methods":[{"id":"77-1352798861991","name":"add","signiture":"Channel.prototype.add()","type":"method","ctx":{"type":"method","constructor":"Channel","cons":"Channel","name":"add","string":"Channel.prototype.add()"},"description":{"full":"<p>Add user to channel.</p>","summary":"<p>Add user to channel.</p>","body":""},"full_description":"<p>Add user to channel.</p>","code":"Channel.prototype.add = function(uid, sid) {\n\tif(this.state > ST_INITED) {\n\t\treturn false;\n\t} else {\n\t\tvar res = add(uid, sid, this.groups);\n\t\tif(res) {\n\t\t\tthis.records[uid] = {sid: sid, uid: uid};\n\t\t}\n\t\treturn res;\n\t}\n};","params":[{"type":"param","types":["Number"],"name":"uid","description":"user id"},{"type":"param","types":["String"],"name":"sid","description":"frontend server id which user has connected to"}],"has_params":true,"tags":[{"type":"param","types":["Number"],"name":"uid","description":"user id"},{"type":"param","types":["String"],"name":"sid","description":"frontend server id which user has connected to"}],"module":false,"parent":"Channel","related":{"href":""},"has_related":true},{"id":"78-1352798861991","name":"leave","signiture":"Channel.prototype.leave()","type":"method","ctx":{"type":"method","constructor":"Channel","cons":"Channel","name":"leave","string":"Channel.prototype.leave()"},"description":{"full":"<p>Remove user from channel.</p>","summary":"<p>Remove user from channel.</p>","body":""},"full_description":"<p>Remove user from channel.</p>","code":"Channel.prototype.leave = function(uid, sid) {\n\tdelete this.records[uid];\n\treturn deleteFrom(uid, sid, this.groups[sid]);\n};","params":[{"type":"param","types":["Number"],"name":"uid","description":"user id"},{"type":"param","types":["String"],"name":"sid","description":"frontend server id which user has connected to. "}],"has_params":true,"tags":[{"type":"param","types":["Number"],"name":"uid","description":"user id"},{"type":"param","types":["String"],"name":"sid","description":"frontend server id which user has connected to. "},{"type":"return","types":["[Boolean]"],"description":"true if success or false if fail"}],"module":false,"parent":"Channel","related":{"href":""},"has_related":true},{"id":"79-1352798861991","name":"getMembers","signiture":"Channel.prototype.getMembers()","type":"method","ctx":{"type":"method","constructor":"Channel","cons":"Channel","name":"getMembers","string":"Channel.prototype.getMembers()"},"description":{"full":"<p>Get channel members.<br />Notice: Heavy operation.</p>","summary":"<p>Get channel members.<br />Notice: Heavy operation.</p>","body":""},"full_description":"<p>Get channel members. Notice: Heavy operation.</p>","code":"Channel.prototype.getMembers = function() {\n\tvar res = [];\n\tif(!this.groups) {\n\t\treturn res;\n\t}\n\n\tvar group, i, l;\n\tfor(var sid in this.groups) {\n\t\tgroup = this.groups[sid];\n\t\tfor(i=0, l=group.length; i<l; i++) {\n\t\t\tres.push(group[i]);\n\t\t}\n\t}\n\treturn res;\n};","params":[],"has_params":false,"tags":[{"type":"return","types":["Array"],"description":"channel member uid list"}],"module":false,"parent":"Channel","related":{"href":""},"has_related":true},{"id":"80-1352798861991","name":"getMember","signiture":"Channel.prototype.getMember()","type":"method","ctx":{"type":"method","constructor":"Channel","cons":"Channel","name":"getMember","string":"Channel.prototype.getMember()"},"description":{"full":"<p>Get Member info.</p>","summary":"<p>Get Member info.</p>","body":""},"full_description":"<p>Get Member info.</p>","code":"Channel.prototype.getMember = function(uid) {\n\treturn this.records[uid];\n};","params":[{"type":"param","types":["String"],"name":"uid","description":"user id"}],"has_params":true,"tags":[{"type":"param","types":["String"],"name":"uid","description":"user id"},{"type":"return","types":["Object"],"description":"member info"}],"module":false,"parent":"Channel","related":{"href":""},"has_related":true},{"id":"81-1352798861991","name":"destroy","signiture":"Channel.prototype.destroy()","type":"method","ctx":{"type":"method","constructor":"Channel","cons":"Channel","name":"destroy","string":"Channel.prototype.destroy()"},"description":{"full":"<p>Destroy channel.</p>","summary":"<p>Destroy channel.</p>","body":""},"full_description":"<p>Destroy channel.</p>","code":"Channel.prototype.destroy = function() {\n\tthis.state = ST_DESTROYED;\n\tthis.__channelService__.destroyChannel(this.name);\n};","params":[],"has_params":false,"tags":[],"module":false,"parent":"Channel","has_related":false},{"id":"82-1352798861991","name":"pushMessage","signiture":"Channel.prototype.pushMessage()","type":"method","ctx":{"type":"method","constructor":"Channel","cons":"Channel","name":"pushMessage","string":"Channel.prototype.pushMessage()"},"description":{"full":"<p>Push message to all the members in the channel</p>","summary":"<p>Push message to all the members in the channel</p>","body":""},"full_description":"<p>Push message to all the members in the channel</p>","code":"Channel.prototype.pushMessage = function(msg, cb) {\n\tif(this.state !== ST_INITED) {\n\t\tutils.invokeCallback(new Error('channel not init'));\n\t\treturn;\n\t}\n\tsendMessageByGroup(this.__channelService__, msg, this.groups, cb);\n};","params":[{"type":"param","types":["msg"],"name":"{Object}","description":"message that would be sent to client"},{"type":"param","types":["cb"],"name":"{Functioin}","description":"cb(err)"}],"has_params":true,"tags":[{"type":"param","types":["msg"],"name":"{Object}","description":"message that would be sent to client"},{"type":"param","types":["cb"],"name":"{Functioin}","description":"cb(err)"}],"module":false,"parent":"Channel","related":{"href":""},"has_related":true}]},{"id":"106-1352798861999","name":"SessionService","signiture":"SessionService()","type":"function","ctx":{"type":"function","name":"SessionService","string":"SessionService()"},"description":{"full":"<p>Session service manages the sessions for each client connection. Session service <br />is created by session component and is only available in frontend servers. There <br />is another LocalSessionService provides session service for backend servers. You <br />can access the service by app.get('sessionService') in frontend servers.</p>","summary":"<p>Session service manages the sessions for each client connection. Session service <br />is created by session component and is only available in frontend servers. There <br />is another LocalSessionService provides session service for backend servers. You <br />can access the service by app.get('sessionService') in frontend servers.</p>","body":""},"full_description":"<p>Session service manages the sessions for each client connection. Session service  is created by session component and is only available in frontend servers. There  is another LocalSessionService provides session service for backend servers. You  can access the service by app.get('sessionService') in frontend servers.</p>","code":"var SessionService = function(opts) {\n\topts = opts || {};\n\tthis.sendDirectly = opts.sendDirectly;\n\tthis.sessions = {};\n\tthis.uidMap = {};\n\tthis.msgQueues = {};\n};\n\nmodule.exports = SessionService;","params":[{"type":"param","types":["Object"],"name":"opts","description":"constructor parameters"}],"has_params":true,"tags":[{"type":"param","types":["Object"],"name":"opts","description":"constructor parameters"},{"type":"","string":"opts.sendDirectly - whether send the request to the client "},{"type":"","string":"\tdirectly or cache them until next flush."},{"type":"class","string":""},{"type":"constructor","string":""}],"module":true,"related":{"href":""},"has_related":true,"methods":[{"id":"107-1352798861999","name":"kick","signiture":"SessionService.prototype.kick()","type":"method","ctx":{"type":"method","constructor":"SessionService","cons":"SessionService","name":"kick","string":"SessionService.prototype.kick()"},"description":{"full":"<p>Kick a user offline.</p>","summary":"<p>Kick a user offline.</p>","body":""},"full_description":"<p>Kick a user offline.</p>","code":"SessionService.prototype.kick = function(uid, cb) {\n\tvar session = this.getByUid(uid);\n\n\tif(session) {\n\t\t// notify client\n\t\tsession.__socket__.send({route: 'onKick'});\n\t\tprocess.nextTick(function() {\n\t\t\tsession.closed('kick');\n\t\t\tutils.invokeCallback(cb);\n\t\t});\n\t} else {\n\t\tprocess.nextTick(function() {\n\t\t\tutils.invokeCallback(cb);\n\t\t});\n\t}\n};","params":[{"type":"param","types":["Number"],"name":"uid","description":"User id asscociated with the session"},{"type":"param","types":["Function"],"name":"cb","description":"Callback function"}],"has_params":true,"tags":[{"type":"param","types":["Number"],"name":"uid","description":"User id asscociated with the session"},{"type":"param","types":["Function"],"name":"cb","description":"Callback function"},{"type":"","string":""},{"type":"memberOf","parent":"SessionService"}],"module":false,"parent":"SessionService","related":{"href":""},"has_related":true}]},{"id":"108-1352798861999","name":"Session","signiture":"Session()","type":"function","ctx":{"type":"function","name":"Session","string":"Session()"},"description":{"full":"<p>Session class.</p>","summary":"<p>Session class.</p>","body":""},"full_description":"<p>Session class.</p>","code":"var Session = function(sid, frontendId, socket, service) {\n\tEventEmitter.call(this);\n\tthis.id = sid;\t\t\t\t\t// r\n\tthis.frontendId = frontendId;\t// r\n\tthis.uid = null;\t\t\t\t// r\n\n\t// private\n\tthis.__socket__ = socket;\n\tthis.__sessionService__ = service;\n\tthis.__state__ = ST_INITED;\n};\n\nutil.inherits(Session, EventEmitter);\n\nSession.prototype.mockLocalSession = function() {\n\treturn new MockLocalSession(this);\n};","params":[],"has_params":false,"tags":[{"type":"class","string":""},{"type":"constructor","string":""}],"module":true,"related":{"href":""},"has_related":true,"methods":[{"id":"109-1352798861999","name":"bind","signiture":"Session.prototype.bind()","type":"method","ctx":{"type":"method","constructor":"Session","cons":"Session","name":"bind","string":"Session.prototype.bind()"},"description":{"full":"<p>Bind the session with the the uid.</p>","summary":"<p>Bind the session with the the uid.</p>","body":""},"full_description":"<p>Bind the session with the the uid.</p>","code":"Session.prototype.bind = function(uid) {\n\tthis.__sessionService__.uidMap[uid] = this;\n\tthis.set('uid', uid);\n\tthis.emit('bind', uid);\n};","params":[{"type":"param","types":["Number"],"name":"uid","description":"User id"}],"has_params":true,"tags":[{"type":"param","types":["Number"],"name":"uid","description":"User id"},{"type":"api","visibility":"public"}],"module":false,"parent":"Session","related":{"href":""},"has_related":true},{"id":"110-1352798861999","name":"set","signiture":"Session.prototype.set()","type":"method","ctx":{"type":"method","constructor":"Session","cons":"Session","name":"set","string":"Session.prototype.set()"},"description":{"full":"<p>Set value for the session.</p>","summary":"<p>Set value for the session.</p>","body":""},"full_description":"<p>Set value for the session.</p>","code":"Session.prototype.set = function(key, value) {\n\tthis[key] = value;\n};","params":[{"type":"param","types":["String"],"name":"key","description":"session key"},{"type":"param","types":["Object"],"name":"value","description":"session value"}],"has_params":true,"tags":[{"type":"param","types":["String"],"name":"key","description":"session key"},{"type":"param","types":["Object"],"name":"value","description":"session value"},{"type":"api","visibility":"public"}],"module":false,"parent":"Session","related":{"href":""},"has_related":true},{"id":"111-1352798861999","name":"get","signiture":"Session.prototype.get()","type":"method","ctx":{"type":"method","constructor":"Session","cons":"Session","name":"get","string":"Session.prototype.get()"},"description":{"full":"<p>Get value from the session.</p>","summary":"<p>Get value from the session.</p>","body":""},"full_description":"<p>Get value from the session.</p>","code":"Session.prototype.get = function(key, value) {\n\treturn this[key];\n};","params":[{"type":"param","types":["String"],"name":"key","description":"session key"}],"has_params":true,"tags":[{"type":"param","types":["String"],"name":"key","description":"session key"},{"type":"return","types":["Object"],"description":"value associated with session key"},{"type":"api","visibility":"public"}],"module":false,"parent":"Session","related":{"href":""},"has_related":true},{"id":"112-1352798861999","name":"closed","signiture":"Session.prototype.closed()","type":"method","ctx":{"type":"method","constructor":"Session","cons":"Session","name":"closed","string":"Session.prototype.closed()"},"description":{"full":"<p>Closed callback for the session.</p>","summary":"<p>Closed callback for the session.</p>","body":""},"full_description":"<p>Closed callback for the session.</p>","code":"Session.prototype.closed = function(reason) {\n\tif(this.__state__ === ST_CLOSED) {\n\t\treturn;\n\t}\n\tthis.__state__ = ST_CLOSED;\n\tthis.__sessionService__.remove(this.id);\n\tthis.emit('closed', this, reason);\n\tthis.__socket__.disconnect();\n};\n\nvar MockLocalSession = function(session) {\n\tEventEmitter.call(this);\n\tclone(session, this, MOCK_EXCLUDE_FIELDS);\n\tthis.__session__ = session;\n};\n\nutil.inherits(MockLocalSession, EventEmitter);\n\nMockLocalSession.prototype.bind = function(uid, cb) {\n\tvar self = this;\n\tthis.__sessionService__.bind(this.id, uid, function(err) {\n\t\tif(!err) {\n\t\t\tself.uid = uid;\n\t\t}\n\t\tcb(err);\n\t});\n};\n\nMockLocalSession.prototype.set = function(key, value) {\n\tthis[key] = value;\n};\n\nMockLocalSession.prototype.get = function(key) {\n\treturn this[key];\n};\n\nMockLocalSession.prototype.push = function(key, cb) {\n\tvar nsession = {key: this.get(key)};\n\tthis.__sessionService__.import(this.id, nsession, cb);\n};\n\nMockLocalSession.prototype.pushAll = function(cb) {\n\tthis.__sessionService__.import(this.id, this, cb);\n};\n\nMockLocalSession.prototype.on = function(event, listener) {\n\tEventEmitter.prototype.on.call(this, event, listener);\n\tthis.__session__.on(event, listener);\n};\n\nMockLocalSession.prototype.export = function() {\n\tvar res = {};\n\tclone(this, res, EXPORT_EXCLUDE_FIELDS);\n\treturn res;\n};\n\nvar clone = function(src, dest, excludes) {\n\tvar v;\n\tfor(var f in src) {\n\t\tif(!src.hasOwnProperty(f)) {\n\t\t\tcontinue;\n\t\t}\n\t\tif(excludes.indexOf(f) >= 0) {\n\t\t\tcontinue;\n\t\t}\n\t\tv = src[f];\n\t\tif(typeof v === 'function') {\n\t\t\tcontinue;\n\t\t}\n\t\tdest[f] = v;\n\t}\n};","params":[],"has_params":false,"tags":[{"type":"api","visibility":"public"}],"module":false,"parent":"Session","related":{"href":""},"has_related":true}]},{"id":"146-1352798861999","name":"Application","signiture":"Application","type":"declaration","ctx":{"type":"declaration","name":"Application","value":"module.exports = {}","string":"Application"},"description":{"full":"<p>Application prototype.</p>","summary":"<p>Application prototype.</p>","body":""},"full_description":"<p>Application prototype.</p>","code":"var Application = module.exports = {};","params":[],"has_params":false,"tags":[{"type":"module","string":""}],"module":true,"related":{"href":""},"has_related":true,"methods":[{"id":"62-1352798861991","name":"kill","signiture":"starter.kill()","type":"method","ctx":{"type":"method","receiver":"starter","name":"kill","string":"starter.kill()"},"description":{"full":"<p>Kill application in all servers</p>","summary":"<p>Kill application in all servers</p>","body":""},"full_description":"<p>Kill application in all servers</p>","code":"starter.kill = function(app, pids, serverIds) {\n\tvar cmd;\n\tfor(var i = 0; i < serverIds.length; i++) {\n\t\tvar server = app.getServerById(serverIds[i]);\n\n\t\tif(!server) {\n\t\t\tcontinue;\n\t\t}\n\n\t\tcmd = util.format('kill -9 %s', pids[i]);\n\t\tif(isLocal(server.host)) {\n\t\t\tstarter.localrun(cmd);\n\t\t} else {\n\t\t\tstarter.sshrun(cmd, server.host);\n\t\t}\n\t}\n};","params":[{"type":"param","types":["String"],"name":"pids","description":"array of server's pid"},{"type":"param","types":["String"],"name":"serverIds","description":"array of serverId"}],"has_params":true,"tags":[{"type":"param","types":["String"],"name":"pids","description":"array of server's pid"},{"type":"param","types":["String"],"name":"serverIds","description":"array of serverId"},{"type":"memberOf","parent":"Application"}],"module":false,"parent":"Application","related":{"href":""},"has_related":true},{"id":"158-1352798862000","name":"set","signiture":"Application.set()","type":"method","ctx":{"type":"method","receiver":"Application","name":"set","string":"Application.set()"},"description":{"full":"<p>Assign <code>setting</code> to <code>val</code>, or return <code>setting</code>'s value.<br />Mounted servers inherit their parent server's settings.</p>","summary":"<p>Assign <code>setting</code> to <code>val</code>, or return <code>setting</code>'s value.<br />Mounted servers inherit their parent server's settings.</p>","body":""},"full_description":"<p>Assign <code>setting</code> to <code>val</code>, or return <code>setting</code>'s value. Mounted servers inherit their parent server's settings.</p>","code":"Application.set = function (setting, val) {\n\tif (1 === arguments.length) {\n\t\tif (this.settings.hasOwnProperty(setting)) {\n\t\t\treturn this.settings[setting];\n\t\t} else if (this.parent) {\n\t\t\treturn this.parent.set(setting);\n\t\t}\n\t} else {\n\t\tthis.settings[setting] = val;\n\t\tthis[setting] = val;\n\t\treturn this;\n\t}\n};","params":[{"type":"param","types":["String"],"name":"setting","description":"the setting of application"},{"type":"param","types":["String"],"name":"val","description":"the setting's value"}],"has_params":true,"tags":[{"type":"param","types":["String"],"name":"setting","description":"the setting of application"},{"type":"param","types":["String"],"name":"val","description":"the setting's value"},{"type":"return","types":["Server","Mixed"],"description":"for chaining, or the setting value"},{"type":"memberOf","parent":"Application"}],"module":false,"parent":"Application","related":{"href":""},"has_related":true},{"id":"161-1352798862000","name":"get","signiture":"Application.get()","type":"method","ctx":{"type":"method","receiver":"Application","name":"get","string":"Application.get()"},"description":{"full":"<p>Get property from setting</p>","summary":"<p>Get property from setting</p>","body":""},"full_description":"<p>Get property from setting</p>","code":"Application.get = function (setting) {\n\tvar val = this.settings[setting];\n\treturn val;\n};","params":[{"type":"param","types":["String"],"name":"setting","description":"application setting"}],"has_params":true,"tags":[{"type":"param","types":["String"],"name":"setting","description":"application setting"},{"type":"return","types":["String"],"description":"val"},{"type":"memberOf","parent":"Application"}],"module":false,"parent":"Application","related":{"href":""},"has_related":true},{"id":"162-1352798862000","name":"enabled","signiture":"Application.enabled()","type":"method","ctx":{"type":"method","receiver":"Application","name":"enabled","string":"Application.enabled()"},"description":{"full":"<p>Check if <code>setting</code> is enabled.</p>","summary":"<p>Check if <code>setting</code> is enabled.</p>","body":""},"full_description":"<p>Check if <code>setting</code> is enabled.</p>","code":"Application.enabled = function (setting) {\n\treturn !!this.set(setting);\n};","params":[{"type":"param","types":["String"],"name":"setting","description":"application setting"}],"has_params":true,"tags":[{"type":"param","types":["String"],"name":"setting","description":"application setting"},{"type":"return","types":["Boolean"],"description":""},{"type":"memberOf","parent":"Application"}],"module":false,"parent":"Application","related":{"href":""},"has_related":true},{"id":"163-1352798862000","name":"disabled","signiture":"Application.disabled()","type":"method","ctx":{"type":"method","receiver":"Application","name":"disabled","string":"Application.disabled()"},"description":{"full":"<p>Check if <code>setting</code> is disabled.</p>","summary":"<p>Check if <code>setting</code> is disabled.</p>","body":""},"full_description":"<p>Check if <code>setting</code> is disabled.</p>","code":"Application.disabled = function (setting) {\n\treturn !this.set(setting);\n};","params":[{"type":"param","types":["String"],"name":"setting","description":"application setting"}],"has_params":true,"tags":[{"type":"param","types":["String"],"name":"setting","description":"application setting"},{"type":"return","types":["Boolean"],"description":""},{"type":"memberOf","parent":"Application"}],"module":false,"parent":"Application","related":{"href":""},"has_related":true},{"id":"164-1352798862000","name":"enable","signiture":"Application.enable()","type":"method","ctx":{"type":"method","receiver":"Application","name":"enable","string":"Application.enable()"},"description":{"full":"<p>Enable <code>setting</code>.</p>","summary":"<p>Enable <code>setting</code>.</p>","body":""},"full_description":"<p>Enable <code>setting</code>.</p>","code":"Application.enable = function (setting) {\n\treturn this.set(setting, true);\n};","params":[{"type":"param","types":["String"],"name":"setting","description":"application setting"}],"has_params":true,"tags":[{"type":"param","types":["String"],"name":"setting","description":"application setting"},{"type":"return","types":["app"],"description":"for chaining"},{"type":"memberOf","parent":"Application"}],"module":false,"parent":"Application","related":{"href":""},"has_related":true},{"id":"165-1352798862000","name":"disable","signiture":"Application.disable()","type":"method","ctx":{"type":"method","receiver":"Application","name":"disable","string":"Application.disable()"},"description":{"full":"<p>Disable <code>setting</code>.</p>","summary":"<p>Disable <code>setting</code>.</p>","body":""},"full_description":"<p>Disable <code>setting</code>.</p>","code":"Application.disable = function (setting) {\n\treturn this.set(setting, false);\n};","params":[{"type":"param","types":["String"],"name":"setting","description":"application setting"}],"has_params":true,"tags":[{"type":"param","types":["String"],"name":"setting","description":"application setting"},{"type":"return","types":["app"],"description":"for chaining"},{"type":"memberOf","parent":"Application"}],"module":false,"parent":"Application","related":{"href":""},"has_related":true},{"id":"166-1352798862000","name":"configure","signiture":"Application.configure()","type":"method","ctx":{"type":"method","receiver":"Application","name":"configure","string":"Application.configure()"},"description":{"full":"<p>Configure callback for the specified env and server type. <br />When no env is specified that callback will<br />be invoked for all environments and when no type is specified <br />that callback will be invoked for all server types. </p>\n\n<h2>Examples</h2>\n\n<pre><code>app.configure(function(){\n    // executed for all envs and server types\n});\n\napp.configure('development', function(){\n    // executed development env\n});\n\napp.configure('development', 'connector', function(){\n    // executed for development env and connector server type\n});\n</code></pre>","summary":"<p>Configure callback for the specified env and server type. <br />When no env is specified that callback will<br />be invoked for all environments and when no type is specified <br />that callback will be invoked for all server types. </p>","body":"<h2>Examples</h2>\n\n<pre><code>app.configure(function(){\n    // executed for all envs and server types\n});\n\napp.configure('development', function(){\n    // executed development env\n});\n\napp.configure('development', 'connector', function(){\n    // executed for development env and connector server type\n});\n</code></pre>"},"full_description":"<p>Configure callback for the specified env and server type.  When no env is specified that callback will be invoked for all environments and when no type is specified  that callback will be invoked for all server types. </p>\n\n<h2>Examples</h2>\n\n<pre><code>app.configure(function(){\n    // executed for all envs and server types\n});\n\napp.configure('development', function(){\n    // executed development env\n});\n\napp.configure('development', 'connector', function(){\n    // executed for development env and connector server type\n});\n</code></pre>","code":"Application.configure = function (env, type, fn) {\n\tvar args = [].slice.call(arguments);\n\tfn = args.pop();\n\tenv = 'all'; \n\ttype = 'all';\n\n\tif(args.length > 0) {\n\t\tenv = args[0];\n\t}\n\tif(args.length > 1) {\n\t\ttype = args[1];\n\t}\n\n\tif (env === 'all' || env.indexOf(this.settings.env) >= 0) {\n\t\tif (type === 'all' || type.indexOf(this.settings.serverType) >= 0) {\n\t\t\tfn.call(this);\n\t\t}\n\t}\n\treturn this;\n};","params":[{"type":"param","types":["String"],"name":"env","description":"application environment "},{"type":"param","types":["Function"],"name":"fn","description":"callback function"},{"type":"param","types":["String"],"name":"type","description":"server type"}],"has_params":true,"tags":[{"type":"param","types":["String"],"name":"env","description":"application environment "},{"type":"param","types":["Function"],"name":"fn","description":"callback function"},{"type":"param","types":["String"],"name":"type","description":"server type"},{"type":"return","types":["Application"],"description":"for chaining"},{"type":"memberOf","parent":"Application"}],"module":false,"parent":"Application","related":{"href":""},"has_related":true}]}]
+    </script>
+    <!-- Array，String，Object扩展函数（因为IE9-不支持，而Lunr有使用到) -->
+    <script src='js/extend.js'></script>
+    <!-- 将原来引用网上的jquery转为引用本地的 -->
+    <script src='js/jquery-1.6.4-min.js'></script>
+    <!-- 将Lunr和页面逻辑整合一起放在lunr.js文件 -->
+    <script src='js/lunr.js'></script>
+  </head>
+  <body>
+    <!-- 顶栏 -->
+    <div class="g-bar">
+      <!-- 顶栏github模块 -->
+      <div class="m-github">
+          <span class="title">gitHub:</span><a class="link" target="_blank" href="#">http://github.com/NetEase/pomelo</a>
+      </div>
+    </div>
+    <!-- 头部 -->
+    <div class="g-hd">
+      <div class="m-hdnav">
+        	<div class="bg">
+         	<div class="wrap">
+          		<ul class="cnt">
+                  	  <li class="current"><a href="index.html">Home</a></li>
+                  	  <li><a href="api.html">Api</a></li>
+                          <li><a href="demo.html">Demo</a></li>
+                   	  <li><a href="community.html">Community</a></li>
+                    	  <li><a href="https://github.com/NetEase/pomelo/wiki" class="last">Wiki</a></li>
+                	</ul>	
+         	 	</div>
+          </div>
+          <div class="logo"><a href="#"><div class="img"></div></a></div>
+      </div>
+    </div>
+    <!-- 整体居中 -->
+    <div class="g-doc">
+      <!-- 主体 -->
+      <div class="g-bd">
+        <!-- API主体 -->
+        <div class="m-wrap">
+          <!-- API -->
+          <div class='main'>
+            <div class='maintt'>
+              <h1> SessionService<span class='version'>0.1.103</span></h1>
+            </div>
+      
+            
+              <div class='cls' id='Pomelo'>
+                <div class='clstt'>
+                  <h2>Pomelo</h2>
+                </div>
+      
+                <div class='clsdes'>
+                  <p>Expose <code>createApplication()</code>.</p>
+                </div>
+      
+                
+                  <div class='method' id='createApp'>
+                    <div class='methodtt'>
+                      <h3>createApp</h3>
+                      <h4>Pomelo.createApp()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                      <ul>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Create an pomelo application.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Pomelo.createApp = function () {
+    var app = application;
+    app.stack = [].slice.apply(arguments);
+    app.init();
+    self.app = app;
+    return app;
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+              </div>
+            
+              <div class='cls' id='ChannelService'>
+                <div class='clstt'>
+                  <h2>ChannelService</h2>
+                </div>
+      
+                <div class='clsdes'>
+                  <p>Create and maintain channels.</p>
+                </div>
+      
+                
+                  <div class='method' id='createChannel'>
+                    <div class='methodtt'>
+                      <h3>createChannel</h3>
+                      <h4>ChannelService.prototype.createChannel()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>name - channel's name</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Create channel with name.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>ChannelService.prototype.createChannel = function(name) {
+	if(!!this.channels[name]) {
+		return this.channels[name];
+	}
+
+	var c = new Channel(name, this);
+	this.channels[name] = c;
+	return c;
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='getChannel'>
+                    <div class='methodtt'>
+                      <h3>getChannel</h3>
+                      <h4>ChannelService.prototype.getChannel()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>name - channel's name</li>
+                        
+                          <li>create - if true, create channel</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Get channel by name.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>ChannelService.prototype.getChannel = function(name, create) {
+	var channel = this.channels[name];
+	if(!channel &amp;&amp; !!create) {
+		channel = this.channels[name] = new Channel(name, this);
+	}
+	return channel;
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='destroyChannel'>
+                    <div class='methodtt'>
+                      <h3>destroyChannel</h3>
+                      <h4>ChannelService.prototype.destroyChannel()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>name - channel' name</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Destroy channel by name.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>ChannelService.prototype.destroyChannel = function(name) {
+	delete this.channels[name];
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='pushMessageByUids'>
+                    <div class='methodtt'>
+                      <h3>pushMessageByUids</h3>
+                      <h4>ChannelService.prototype.pushMessageByUids()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>msg - message that would be sent to client</li>
+                        
+                          <li>uids - [{uid: userId, sid: serverId}]</li>
+                        
+                          <li>cb - cb(err)</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Push message by uids. Group the uids by group. ignore any uid if sid not specified.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>ChannelService.prototype.pushMessageByUids = function(msg, uids, cb) {
+	if(!uids || uids.length === 0) {
+		utils.invokeCallback(cb, new Error('uids should not be empty'));
+		return;
+	}
+	var groups = {}, record;
+	for(var i=0, l=uids.length; i&lt;l; i++) {
+		record = uids[i];
+		add(record.uid, record.sid, groups);
+	}
+
+	sendMessageByGroup(this, msg, groups, cb);
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+              </div>
+            
+              <div class='cls' id='Channel'>
+                <div class='clstt'>
+                  <h2>Channel</h2>
+                </div>
+      
+                <div class='clsdes'>
+                  <p>Channel  maintains a number of user informations: userId, serverId and their mapping.   It is used to  broadcast message to users in the channel. </p>
+                </div>
+      
+                
+                  <div class='method' id='add'>
+                    <div class='methodtt'>
+                      <h3>add</h3>
+                      <h4>Channel.prototype.add()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>uid - user id</li>
+                        
+                          <li>sid - frontend server id which user has connected to</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Add user to channel.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Channel.prototype.add = function(uid, sid) {
+	if(this.state &gt; ST_INITED) {
+		return false;
+	} else {
+		var res = add(uid, sid, this.groups);
+		if(res) {
+			this.records[uid] = {sid: sid, uid: uid};
+		}
+		return res;
+	}
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='leave'>
+                    <div class='methodtt'>
+                      <h3>leave</h3>
+                      <h4>Channel.prototype.leave()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>uid - user id</li>
+                        
+                          <li>sid - frontend server id which user has connected to. </li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Remove user from channel.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Channel.prototype.leave = function(uid, sid) {
+	delete this.records[uid];
+	return deleteFrom(uid, sid, this.groups[sid]);
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='getMembers'>
+                    <div class='methodtt'>
+                      <h3>getMembers</h3>
+                      <h4>Channel.prototype.getMembers()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                      <ul>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Get channel members. Notice: Heavy operation.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Channel.prototype.getMembers = function() {
+	var res = [];
+	if(!this.groups) {
+		return res;
+	}
+
+	var group, i, l;
+	for(var sid in this.groups) {
+		group = this.groups[sid];
+		for(i=0, l=group.length; i&lt;l; i++) {
+			res.push(group[i]);
+		}
+	}
+	return res;
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='getMember'>
+                    <div class='methodtt'>
+                      <h3>getMember</h3>
+                      <h4>Channel.prototype.getMember()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>uid - user id</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Get Member info.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Channel.prototype.getMember = function(uid) {
+	return this.records[uid];
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='destroy'>
+                    <div class='methodtt'>
+                      <h3>destroy</h3>
+                      <h4>Channel.prototype.destroy()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                      <ul>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Destroy channel.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Channel.prototype.destroy = function() {
+	this.state = ST_DESTROYED;
+	this.__channelService__.destroyChannel(this.name);
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='pushMessage'>
+                    <div class='methodtt'>
+                      <h3>pushMessage</h3>
+                      <h4>Channel.prototype.pushMessage()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>{Object} - message that would be sent to client</li>
+                        
+                          <li>{Functioin} - cb(err)</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Push message to all the members in the channel</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Channel.prototype.pushMessage = function(msg, cb) {
+	if(this.state !== ST_INITED) {
+		utils.invokeCallback(new Error('channel not init'));
+		return;
+	}
+	sendMessageByGroup(this.__channelService__, msg, this.groups, cb);
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+              </div>
+            
+              <div class='cls' id='SessionService'>
+                <div class='clstt'>
+                  <h2>SessionService</h2>
+                </div>
+      
+                <div class='clsdes'>
+                  <p>Session service manages the sessions for each client connection. Session service  is created by session component and is only available in frontend servers. There  is another LocalSessionService provides session service for backend servers. You  can access the service by app.get('sessionService') in frontend servers.</p>
+                </div>
+      
+                
+                  <div class='method' id='kick'>
+                    <div class='methodtt'>
+                      <h3>kick</h3>
+                      <h4>SessionService.prototype.kick()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>uid - User id asscociated with the session</li>
+                        
+                          <li>cb - Callback function</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Kick a user offline.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>SessionService.prototype.kick = function(uid, cb) {
+	var session = this.getByUid(uid);
+
+	if(session) {
+		// notify client
+		session.__socket__.send({route: 'onKick'});
+		process.nextTick(function() {
+			session.closed('kick');
+			utils.invokeCallback(cb);
+		});
+	} else {
+		process.nextTick(function() {
+			utils.invokeCallback(cb);
+		});
+	}
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+              </div>
+            
+              <div class='cls' id='Session'>
+                <div class='clstt'>
+                  <h2>Session</h2>
+                </div>
+      
+                <div class='clsdes'>
+                  <p>Session class.</p>
+                </div>
+      
+                
+                  <div class='method' id='bind'>
+                    <div class='methodtt'>
+                      <h3>bind</h3>
+                      <h4>Session.prototype.bind()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>uid - User id</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Bind the session with the the uid.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Session.prototype.bind = function(uid) {
+	this.__sessionService__.uidMap[uid] = this;
+	this.set('uid', uid);
+	this.emit('bind', uid);
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='set'>
+                    <div class='methodtt'>
+                      <h3>set</h3>
+                      <h4>Session.prototype.set()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>key - session key</li>
+                        
+                          <li>value - session value</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Set value for the session.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Session.prototype.set = function(key, value) {
+	this[key] = value;
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='get'>
+                    <div class='methodtt'>
+                      <h3>get</h3>
+                      <h4>Session.prototype.get()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>key - session key</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Get value from the session.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Session.prototype.get = function(key, value) {
+	return this[key];
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='closed'>
+                    <div class='methodtt'>
+                      <h3>closed</h3>
+                      <h4>Session.prototype.closed()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                      <ul>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Closed callback for the session.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Session.prototype.closed = function(reason) {
+	if(this.__state__ === ST_CLOSED) {
+		return;
+	}
+	this.__state__ = ST_CLOSED;
+	this.__sessionService__.remove(this.id);
+	this.emit('closed', this, reason);
+	this.__socket__.disconnect();
+};
+
+var MockLocalSession = function(session) {
+	EventEmitter.call(this);
+	clone(session, this, MOCK_EXCLUDE_FIELDS);
+	this.__session__ = session;
+};
+
+util.inherits(MockLocalSession, EventEmitter);
+
+MockLocalSession.prototype.bind = function(uid, cb) {
+	var self = this;
+	this.__sessionService__.bind(this.id, uid, function(err) {
+		if(!err) {
+			self.uid = uid;
+		}
+		cb(err);
+	});
+};
+
+MockLocalSession.prototype.set = function(key, value) {
+	this[key] = value;
+};
+
+MockLocalSession.prototype.get = function(key) {
+	return this[key];
+};
+
+MockLocalSession.prototype.push = function(key, cb) {
+	var nsession = {key: this.get(key)};
+	this.__sessionService__.import(this.id, nsession, cb);
+};
+
+MockLocalSession.prototype.pushAll = function(cb) {
+	this.__sessionService__.import(this.id, this, cb);
+};
+
+MockLocalSession.prototype.on = function(event, listener) {
+	EventEmitter.prototype.on.call(this, event, listener);
+	this.__session__.on(event, listener);
+};
+
+MockLocalSession.prototype.export = function() {
+	var res = {};
+	clone(this, res, EXPORT_EXCLUDE_FIELDS);
+	return res;
+};
+
+var clone = function(src, dest, excludes) {
+	var v;
+	for(var f in src) {
+		if(!src.hasOwnProperty(f)) {
+			continue;
+		}
+		if(excludes.indexOf(f) &gt;= 0) {
+			continue;
+		}
+		v = src[f];
+		if(typeof v === 'function') {
+			continue;
+		}
+		dest[f] = v;
+	}
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+              </div>
+            
+              <div class='cls' id='Application'>
+                <div class='clstt'>
+                  <h2>Application</h2>
+                </div>
+      
+                <div class='clsdes'>
+                  <p>Application prototype.</p>
+                </div>
+      
+                
+                  <div class='method' id='kill'>
+                    <div class='methodtt'>
+                      <h3>kill</h3>
+                      <h4>starter.kill()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>pids - array of server's pid</li>
+                        
+                          <li>serverIds - array of serverId</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Kill application in all servers</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>starter.kill = function(app, pids, serverIds) {
+	var cmd;
+	for(var i = 0; i &lt; serverIds.length; i++) {
+		var server = app.getServerById(serverIds[i]);
+
+		if(!server) {
+			continue;
+		}
+
+		cmd = util.format('kill -9 %s', pids[i]);
+		if(isLocal(server.host)) {
+			starter.localrun(cmd);
+		} else {
+			starter.sshrun(cmd, server.host);
+		}
+	}
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='set'>
+                    <div class='methodtt'>
+                      <h3>set</h3>
+                      <h4>Application.set()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>setting - the setting of application</li>
+                        
+                          <li>val - the setting's value</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Assign <code>setting</code> to <code>val</code>, or return <code>setting</code>'s value. Mounted servers inherit their parent server's settings.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Application.set = function (setting, val) {
+	if (1 === arguments.length) {
+		if (this.settings.hasOwnProperty(setting)) {
+			return this.settings[setting];
+		} else if (this.parent) {
+			return this.parent.set(setting);
+		}
+	} else {
+		this.settings[setting] = val;
+		this[setting] = val;
+		return this;
+	}
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='get'>
+                    <div class='methodtt'>
+                      <h3>get</h3>
+                      <h4>Application.get()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>setting - application setting</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Get property from setting</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Application.get = function (setting) {
+	var val = this.settings[setting];
+	return val;
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='enabled'>
+                    <div class='methodtt'>
+                      <h3>enabled</h3>
+                      <h4>Application.enabled()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>setting - application setting</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Check if <code>setting</code> is enabled.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Application.enabled = function (setting) {
+	return !!this.set(setting);
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='disabled'>
+                    <div class='methodtt'>
+                      <h3>disabled</h3>
+                      <h4>Application.disabled()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>setting - application setting</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Check if <code>setting</code> is disabled.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Application.disabled = function (setting) {
+	return !this.set(setting);
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='enable'>
+                    <div class='methodtt'>
+                      <h3>enable</h3>
+                      <h4>Application.enable()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>setting - application setting</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Enable <code>setting</code>.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Application.enable = function (setting) {
+	return this.set(setting, true);
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='disable'>
+                    <div class='methodtt'>
+                      <h3>disable</h3>
+                      <h4>Application.disable()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>setting - application setting</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Disable <code>setting</code>.</p>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Application.disable = function (setting) {
+	return this.set(setting, false);
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+                  <div class='method' id='configure'>
+                    <div class='methodtt'>
+                      <h3>configure</h3>
+                      <h4>Application.configure()</h4>
+                      <p class='type'>type: method</p>
+                    </div>
+      
+                    <div class='params'>
+                      
+                        <h4>Params</h4>
+                      
+                      <ul>
+                        
+                          <li>env - application environment </li>
+                        
+                          <li>fn - callback function</li>
+                        
+                          <li>type - server type</li>
+                        
+                      </ul>
+                    </div>
+      
+                    
+      
+                    <div>
+                      <p>Configure callback for the specified env and server type.  When no env is specified that callback will be invoked for all environments and when no type is specified  that callback will be invoked for all server types. </p>
+
+<h2>Examples</h2>
+
+<pre><code>app.configure(function(){
+    // executed for all envs and server types
+});
+
+app.configure('development', function(){
+    // executed development env
+});
+
+app.configure('development', 'connector', function(){
+    // executed for development env and connector server type
+});
+</code></pre>
+                    </div>
+      
+                    <div class='source'>
+                      <h4>Source</h4>
+                      <pre><code>Application.configure = function (env, type, fn) {
+	var args = [].slice.call(arguments);
+	fn = args.pop();
+	env = 'all'; 
+	type = 'all';
+
+	if(args.length &gt; 0) {
+		env = args[0];
+	}
+	if(args.length &gt; 1) {
+		type = args[1];
+	}
+
+	if (env === 'all' || env.indexOf(this.settings.env) &gt;= 0) {
+		if (type === 'all' || type.indexOf(this.settings.serverType) &gt;= 0) {
+			fn.call(this);
+		}
+	}
+	return this;
+};</code></pre>
+                    </div>
+                    
+                  </div>
+                
+              </div>
+            
+          </div>
+          <!-- API导航 -->
+          <div class='side'>
+            <div class='m-nav'>
+              <div class='m-search'>
+                <input type="text" id="search-input" placeholder="Search"></input>
+                <div id="search-results"></div>
+              </div>
+              <ul>
+                
+                  <li>
+                    <h3><a target='Pomelo' class='cap'>Pomelo</a></h3>
+                    <ul>
+                      
+                        <li><a target='createApp'>createApp</a></li>
+                      
+                    </ul>
+                  </li>
+                
+                  <li>
+                    <h3><a target='ChannelService' class='cap'>ChannelService</a></h3>
+                    <ul>
+                      
+                        <li><a target='createChannel'>createChannel</a></li>
+                      
+                        <li><a target='getChannel'>getChannel</a></li>
+                      
+                        <li><a target='destroyChannel'>destroyChannel</a></li>
+                      
+                        <li><a target='pushMessageByUids'>pushMessageByUids</a></li>
+                      
+                    </ul>
+                  </li>
+                
+                  <li>
+                    <h3><a target='Channel' class='cap'>Channel</a></h3>
+                    <ul>
+                      
+                        <li><a target='add'>add</a></li>
+                      
+                        <li><a target='leave'>leave</a></li>
+                      
+                        <li><a target='getMembers'>getMembers</a></li>
+                      
+                        <li><a target='getMember'>getMember</a></li>
+                      
+                        <li><a target='destroy'>destroy</a></li>
+                      
+                        <li><a target='pushMessage'>pushMessage</a></li>
+                      
+                    </ul>
+                  </li>
+                
+                  <li>
+                    <h3><a target='SessionService' class='cap'>SessionService</a></h3>
+                    <ul>
+                      
+                        <li><a target='kick'>kick</a></li>
+                      
+                    </ul>
+                  </li>
+                
+                  <li>
+                    <h3><a target='Session' class='cap'>Session</a></h3>
+                    <ul>
+                      
+                        <li><a target='bind'>bind</a></li>
+                      
+                        <li><a target='set'>set</a></li>
+                      
+                        <li><a target='get'>get</a></li>
+                      
+                        <li><a target='closed'>closed</a></li>
+                      
+                    </ul>
+                  </li>
+                
+                  <li>
+                    <h3><a target='Application' class='cap'>Application</a></h3>
+                    <ul>
+                      
+                        <li><a target='kill'>kill</a></li>
+                      
+                        <li><a target='set'>set</a></li>
+                      
+                        <li><a target='get'>get</a></li>
+                      
+                        <li><a target='enabled'>enabled</a></li>
+                      
+                        <li><a target='disabled'>disabled</a></li>
+                      
+                        <li><a target='enable'>enable</a></li>
+                      
+                        <li><a target='disable'>disable</a></li>
+                      
+                        <li><a target='configure'>configure</a></li>
+                      
+                    </ul>
+                  </li>
+                
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 尾部 -->
+    <div class="g-ft">
+      <!-- 尾部模块 -->
+      <div class="m-ft">
+	copyright 2012, NetEase, Inc. All Rights Reserved.
+      </div>
+    </div>
+    <!-- 向上图标 -->
+    <div class='m-arrow f-dn'><a href="#"></a></div>
+    <!-- 代码高亮模块 -->
+    <script src='js/hijs.js'></script>
+    <!-- 页面效果模块 -->
+    <script src='js/api.js'></script>
+  </body>
+</html>
