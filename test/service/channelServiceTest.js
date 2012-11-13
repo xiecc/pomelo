@@ -1,16 +1,13 @@
 var should = require('should');
 var pomelo = require('../../');
-var channelService = require('../../lib/common/service/channelService');
+var ChannelService = require('../../lib/common/service/channelService');
 
 var channelName = 'test_channel';
 
 describe('channel manager test', function() {
-	afterEach(function() {
-		channelService.destroyChannel(channelName);
-	});
-
 	describe('createChannel', function() {
 		it('should create and return a channel with the specified name', function() {
+			var channelService = new ChannelService();
 			var channel = channelService.createChannel(channelName);
 			should.exist(channel);
 			channelName.should.equal(channel.name);
@@ -19,6 +16,7 @@ describe('channel manager test', function() {
 
 	describe('getChannel', function() {
 		it('should return the channel with the specified name if it exists', function() {
+			var channelService = new ChannelService();
 			channelService.createChannel(channelName);
 			var channel = channelService.getChannel(channelName);
 			should.exist(channel);
@@ -26,11 +24,13 @@ describe('channel manager test', function() {
 		});
 
 		it('should return undefined if the channel dose not exist', function() {
+			var channelService = new ChannelService();
 			var channel = channelService.getChannel(channelName);
 			should.not.exist(channel);
 		});
 
 		it('should create and return a new channel if create parameter is set', function() {
+			var channelService = new ChannelService();
 			var channel = channelService.getChannel(channelName, true);
 			should.exist(channel);
 			channelName.should.equal(channel.name);
@@ -68,6 +68,7 @@ describe('channel manager test', function() {
 
 			var app = pomelo.createApp();
 			app.rpcInvoke = mockRpcInvoke;
+			var channelService = new ChannelService(app);
 
 			channelService.pushMessageByUids(mockMsg, mockUids, function() {
 				invokeCount.should.equal(2);
