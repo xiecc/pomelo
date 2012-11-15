@@ -1,5 +1,15 @@
 var should = require('should');
-var connectionService = require('../../lib/common/service/connectionService');
+var ConnectionService = require('../../lib/common/service/connectionService');
+
+var mockApp = {
+	settings: {
+		serverId: 'connector-server-1'
+	}, 
+
+	get: function(key) {
+		return this.settings[key];
+	}
+};
 
 var mockPlayer1 = {
 	uid : "123",
@@ -17,7 +27,7 @@ var mockPlayer2 = {
 
 describe("connectionService",function(){
 	it('should add login user info',function(done){
-		var mockService1 = new connectionService({serverId:"connector-server-1"});
+		var mockService1 = new ConnectionService(mockApp);
 		
 		mockService1.addLoginedUser(mockPlayer1.uid,mockPlayer1.info);
 		mockService1.loginedCount.should.equal(1);
@@ -37,7 +47,7 @@ describe("connectionService",function(){
 	});
 
 	it('should remove login user info',function(done){
-		var mockService1 = new connectionService({serverId:"connector-server-1"});
+		var mockService1 = new ConnectionService(mockApp);
 
 		mockService1.addLoginedUser(mockPlayer1.uid,mockPlayer1.info);
 		mockService1.addLoginedUser(mockPlayer2.uid,mockPlayer2.info);
@@ -53,7 +63,7 @@ describe("connectionService",function(){
 	});
 
 	it('should getStatisticsInfo',function(done){
-		var mockService1 = new connectionService({serverId:"connector-server-1"});
+		var mockService1 = new ConnectionService(mockApp);
 
 		mockService1.addLoginedUser(mockPlayer1.uid,mockPlayer1.info);
 		mockService1.addLoginedUser(mockPlayer2.uid,mockPlayer2.info);

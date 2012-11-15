@@ -15,7 +15,8 @@ var mockSession = {
 	}
 };
 
-var mockMsg = {route: 'connector.testHandler.testMethod', body: {key: 'some request message'}};
+var mockMsg = {key: 'some request message'};
+var mockRouteRecord = {serverType: 'connector', handler: 'testHandler', method: 'testMethod'};
 
 describe('handler service test', function() {
 	describe('handle', function() {
@@ -26,7 +27,7 @@ describe('handler service test', function() {
 				testHandler: {
 					testMethod: function(msg, session, next) {
 						invoke1Count++;
-						msg.should.eql(mockMsg.body);
+						msg.should.eql(mockMsg);
 						next();
 					}
 				}, 
@@ -40,43 +41,9 @@ describe('handler service test', function() {
 
 			var service = new HandlerService(mockApp, mockHandlers);
 
-			service.handle(mockMsg, mockSession, function() {
+			service.handle(mockRouteRecord, mockMsg, mockSession, function() {
 				invoke1Count.should.equal(1);
 				invoke2Count.should.equal(0);
-				done();
-			});
-		});
-
-		it('should dispatch the request to the remote server if the route not match current server type', function(done) {
-			var invokeCount = 0, invoke2Count = 0;
-			
-			// mock datas
-			var mockApp = {
-				serverType: 'area', 
-
-				get: function(key) {
-					return this[key];
-				}, 
-
-				sysrpc: {
-					connector: {
-						msgRemote: {
-							forwardMessage: function(session, msg, expSession, cb) {
-								invokeCount++;
-								session.should.eql(mockSession);
-								msg.should.eql(mockMsg);
-								expSession.should.eql(mockSession);
-								cb();
-							}
-						}
-					}
-				}
-			};
-
-			var service = new HandlerService(mockApp);
-
-			service.handle(mockMsg, mockSession, function() {
-				invokeCount.should.equal(1);
 				done();
 			});
 		});
@@ -85,7 +52,7 @@ describe('handler service test', function() {
 			var mockHandlers = {};
 			var service = new HandlerService(mockApp, mockHandlers);
 
-			service.handle(mockMsg, mockSession, function(err) {
+			service.handle(mockRouteRecord, mockMsg, mockSession, function(err) {
 				should.exist(err);
 				done();
 			});

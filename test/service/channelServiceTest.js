@@ -3,6 +3,7 @@ var pomelo = require('../../');
 var ChannelService = require('../../lib/common/service/channelService');
 
 var channelName = 'test_channel';
+var mockBase = process.cwd() + '/test';
 
 describe('channel manager test', function() {
 	describe('createChannel', function() {
@@ -66,7 +67,7 @@ describe('channel manager test', function() {
 				cb();
 			};
 
-			var app = pomelo.createApp();
+			var app = pomelo.createApp({base: mockBase});
 			app.rpcInvoke = mockRpcInvoke;
 			var channelService = new ChannelService(app);
 

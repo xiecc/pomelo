@@ -2,15 +2,17 @@ var app = require('../lib/application');
 var should = require('should');
 
 var WAIT_TIME = 100;
+var mockBase = process.cwd() + '/test';
 
 describe('application test', function(){
 	afterEach(function() {
 		app.state = 0;
+		app.settings = {};
 	});
 
 	describe('#init', function() {
 		it('should init the app instance', function() {
-			app.init();
+			app.init({base: mockBase});
 			app.state.should.equal(1);  // magic number from application.js
 		});
 	});
@@ -22,6 +24,13 @@ describe('application test', function(){
 			var key = 'some defined key', value = 'some value';
 			app.set(key, value);
 			value.should.equal(app.get(key));
+		});
+
+		it('should return the value if pass just one parameter to the set method', function() {
+			var key = 'some defined key', value = 'some value';
+			should.not.exist(app.set(key));
+			app.set(key, value);
+			value.should.equal(app.set(key));
 		});
 	});
 
@@ -62,8 +71,7 @@ describe('application test', function(){
 				}
 			};
 
-			app.init();
-			app.set('base', process.cwd() + '/test');
+			app.init({base: mockBase});
 			app.defaultConfiguration();
 			app.load(mockComponent);
 			app.start(function(err) {
@@ -92,7 +100,7 @@ describe('application test', function(){
 				return {content: 'some thing in comp3', name: key3};
 			};
 
-			app.init();
+			app.init({base: mockBase});
 			app.load(key1, comp1);
 			app.load(comp2);
 			app.load(comp3);
@@ -108,7 +116,7 @@ describe('application test', function(){
 			var proCount = 0, devCount = 0;
 			var proEnv = 'production', devEnv = 'development', serverType = 'server';
 
-			app.init();
+			app.init({base: mockBase});
 			app.set('serverType', serverType);
 			app.set('env', proEnv);
 
@@ -138,7 +146,7 @@ describe('application test', function(){
 			var server1Count = 0, server2Count = 0;
 			var proEnv = 'production', serverType1 = 'server1', serverType2 = 'server2';
 
-			app.init();
+			app.init({base: mockBase});
 			app.set('serverType', serverType1);
 			app.set('env', proEnv);
 
