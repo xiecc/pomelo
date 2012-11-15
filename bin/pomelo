@@ -192,7 +192,7 @@ function start() {
                 console.info(RUNDAEMON_INFO);
             } else abort(INSTALLFOREVER_ERROR);
         }
-        fs.writeFile(TMP_FILE, mode);
+      fs.writeFile(TMP_FILE, mode + ':' + DAEMON);
     } else abort(NOWORKSPACE_ERROR);
 };
 
@@ -206,7 +206,7 @@ function list() {
            if(err) abort(FILEREAD_ERROR);
            var client = new adminClient();
            MASTER_JSON = require(MASTER_CONFIG);
-           var config = MASTER_JSON[data.toString()];
+           var config = MASTER_JSON[data.toString().split(':')[0]];
            var id = 'pomelo_list_' + Date.now();
            client.connect(id, config.host, config.port, function(err) {
                if(err) abort(CONNECT_ERROR);
@@ -281,8 +281,15 @@ function terminal(signal) {
             if(err) abort(FILEREAD_ERROR);
             var client = new adminClient();
             MASTER_JSON = require(MASTER_CONFIG);
-            var config = MASTER_JSON[data.toString()];
+            var config = MASTER_JSON[data.toString().split(':')[0]];
             var id = 'pomelo_terminal_' + Date.now();
+            if(data.toString().split(':')[1] == 'true') {
+                setTimeout(function() {
+                    if(IF_HOME) exec('forever stop app.js');
+                    else exec('cd game-server && forever stop app.js');
+                    process.exit(1);
+                }, TIME_KILL_WAIT);
+            }
             client.connect(id, config.host, config.port, function(err) {
                 if(err) abort(CONNECT_ERROR);
                 client.request('nodeInfo', null, function(err, msg) {
