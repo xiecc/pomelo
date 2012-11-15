@@ -5,6 +5,7 @@
  */
 var fs = require('fs'),
     cp = require('child_process'),
+    ph = require('path'),
     exec = cp.exec,
     spawn = cp.spawn,
     adminClient = require('pomelo-admin').adminClient, 
@@ -16,13 +17,13 @@ var fs = require('fs'),
  *  Common Variables
  */
 var args = process.argv.slice(2);
-var DEAMON = false;
+var DAEMON = false;
 var TIME_INIT = 1000;
 var TIME_KILL_WAIT = 5000;
 var CUR_DIR = process.cwd();
 var IF_HOME = utils.endsWith(CUR_DIR, 'game-server');
 var IF_WORKSPACE = fs.existsSync('./app.js') || fs.existsSync('game-server/app.js');
-var FOREVER = fs.existsSync('/usr/local/bin/forever');
+var FOREVER = fs.existsSync(ph.dirname(process.execPath) + '/forever');
 var HOME = IF_HOME ? CUR_DIR : CUR_DIR + '/game-server';
 var LOGS_DIR = IF_HOME ? CUR_DIR + '/logs/' : CUR_DIR + '/game-server/logs/';
 var MASTER_CONFIG = HOME + '/config/master.json';
@@ -41,7 +42,7 @@ var CONNECT_ERROR = 'Fail to connect to admin console server.';
 var NODEINFO_ERROR = 'Fail to request node information.';
 var STOPSERVER_ERROR = 'Fail to stop server.';
 var FILEREAD_ERROR = 'Fail to read the file, please check if the application is started legally.';
-var RUNDEAMON_INFO = 'Application run in daemon.\nStop the application use the command:pomelo stop.';
+var RUNDAEMON_INFO = 'Application run in daemon.\nStop the application use the command:pomelo stop.';
 var CLOSEAPP_INFO = 'Closing the application......\nPlease wait......';
 
 /**
@@ -155,13 +156,13 @@ function start() {
         break;
     case 1:
         if(args[0] == DEV || args[0] == PRD) mode = args[0];
-        else if(args[0] == DEM) DEAMON = true;
+        else if(args[0] == DEM) DAEMON = true;
         else abort(COMMAND_ERROR);
         break;
     case 2:
         if(args[0] == DEV || args[0] == PRD) {
             mode = args[0];
-            if(args[1] == DEM) DEAMON = true;
+            if(args[1] == DEM) DAEMON = true;
             else abort(COMMAND_ERROR);
         } else abort(COMMAND_ERROR);
         break;
@@ -171,7 +172,7 @@ function start() {
     };
     if(IF_WORKSPACE) {
         var ls;
-        if(!DEAMON) {
+        if(!DAEMON) {
             if(!IF_HOME) {
                 var cmd = util.format('cd %s && node ' + HOME + '/app.js env=', 'game-server');
                 cmd += mode;
@@ -188,10 +189,10 @@ function start() {
                 var cmd = 'forever start ' + FOREVER_ARGS + ' app.js env=' + mode;
                 if(!IF_HOME) cmd = util.format('cd %s && ' + cmd, 'game-server');
                 ls = exec(cmd);
-                console.info(RUNDEAMON_INFO);
+                console.info(RUNDAEMON_INFO);
             } else abort(INSTALLFOREVER_ERROR);
         }
-        fs.writeFile(TMP_FILE, mode + ':' + DEAMON);
+        fs.writeFile(TMP_FILE, mode);
     } else abort(NOWORKSPACE_ERROR);
 };
 
@@ -205,7 +206,7 @@ function list() {
            if(err) abort(FILEREAD_ERROR);
            var client = new adminClient();
            MASTER_JSON = require(MASTER_CONFIG);
-           var config = MASTER_JSON[data.toString().split(':')[0]];
+           var config = MASTER_JSON[data.toString()];
            var id = 'pomelo_list_' + Date.now();
            client.connect(id, config.host, config.port, function(err) {
                if(err) abort(CONNECT_ERROR);
@@ -280,14 +281,7 @@ function terminal(signal) {
             if(err) abort(FILEREAD_ERROR);
             var client = new adminClient();
             MASTER_JSON = require(MASTER_CONFIG);
-            var config = MASTER_JSON[data.toString().split(':')[0]];
-            if(data.toString().split(':')[1] == 'true') {
-                setTimeout(function() {
-                    if(IF_HOME) exec('forever stop app.js');
-                    else exec('cd game-server && forever stop app.js');
-                    process.exit(1);
-                }, TIME_KILL_WAIT);
-            }
+            var config = MASTER_JSON[data.toString()];
             var id = 'pomelo_terminal_' + Date.now();
             client.connect(id, config.host, config.port, function(err) {
                 if(err) abort(CONNECT_ERROR);
