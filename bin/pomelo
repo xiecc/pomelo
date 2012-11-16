@@ -292,30 +292,22 @@ function terminal(signal) {
             }
             client.connect(id, config.host, config.port, function(err) {
                 if(err) abort(CONNECT_ERROR);
-                client.request('nodeInfo', null, function(err, msg) {
-                    var pid = [];
-                    var serverId = [];
-                    for(var id in msg) {
-                        pid.push(msg[id]['pid']);
-                        serverId.push(msg[id]['serverId']);
-                    }
                     client.request(stop.moduleId, {
-                        signal: signal,
-                        pid: pid,
-                        serverId: serverId
+                        signal: signal
                     }, function(err, msg) {
                         if(err) abort(STOPSERVER_ERROR);
+                        if(msg.status === "error") abort(STOPSERVER_ERROR);
                         setTimeout(function() {
                             exec(KILL_CMD);
                             fs.unlinkSync(TMP_FILE);
                             process.exit(1);
                         }, TIME_KILL_WAIT);
                     });
-                });
             });
         });
     } else abort(NOWORKSPACE_ERROR);
 };
+
 
 /**
  * Check if the given directory `path` is empty.
