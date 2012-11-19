@@ -1,6 +1,6 @@
 {
 	"name":"pomelo",
-	"version":"0.1.113",
+	"version":"0.1.115",
 	"private":false,
 	"dependencies":{
 		"socket.io":">=0.9.4",
@@ -13,6 +13,7 @@
 		"pomelo-rpc":">=0.0.10",
 		"pomelo-protocol":">=0.0.3", 
 		"pomelo-admin":">=0.0.17", 
+		"pomelo-monitor":">=0.3.5",
 		"pomelo-logger": "0.0.2"
 	},
 	"bin":{
