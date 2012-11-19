@@ -1,6 +1,6 @@
 {
 	"name":"pomelo",
-	"version":"0.1.115",
+	"version":"0.1.116",
 	"private":false,
 	"dependencies":{
 		"socket.io":">=0.9.4",
