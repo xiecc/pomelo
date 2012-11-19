@@ -9,10 +9,9 @@ var fs = require('fs'),
     cliff = require('cliff'),
     exec = cp.exec,
     spawn = cp.spawn,
-    adminClient = require('pomelo-admin').adminClient, 
-    stop = require('../lib/modules/stop');
-    utils = require('../lib/util/utils'),
-    util = require('util');
+    adminClient = require('pomelo-admin').adminClient,
+    co = require('../lib/modules/console');
+utils = require('../lib/util/utils'), util = require('util');
 
 /**
  *  Common Variables
@@ -99,6 +98,7 @@ var version = JSON.parse(fs.readFileSync(__dirname + '/../package.json')).versio
  *
  * @param {String} path
  */
+
 function init(path) {
     emptyDirectory(path, function(empty) {
         if(empty) {
@@ -121,6 +121,7 @@ function init(path) {
  *
  * @param {String} path
  */
+
 function createApplicationAt(path) {
     var name = path;
     if(path.indexOf('/') !== -1) {
@@ -150,6 +151,7 @@ function createApplicationAt(path) {
  * Start application.
  *
  */
+
 function start() {
     var mode = DEV;
     switch(args.length) {
@@ -193,7 +195,7 @@ function start() {
                 console.info(RUNDAEMON_INFO);
             } else abort(INSTALLFOREVER_ERROR);
         }
-      fs.writeFile(TMP_FILE, mode + ':' + DAEMON);
+        fs.writeFile(TMP_FILE, mode + ':' + DAEMON);
     } else abort(NOWORKSPACE_ERROR);
 };
 
@@ -201,35 +203,39 @@ function start() {
  * List pomelo processes.
  *
  */
+
 function list() {
     if(IF_WORKSPACE) {
-       fs.readFile(TMP_FILE, function(err, data) {
-           if(err) abort(FILEREAD_ERROR);
-           var client = new adminClient();
-           MASTER_JSON = require(MASTER_CONFIG);
-           var config = MASTER_JSON[data.toString().split(':')[0]];
-           var id = 'pomelo_list_' + Date.now();
-           client.connect(id, config.host, config.port, function(err) {
-               if(err) abort(CONNECT_ERROR);
-               else {
-                   client.request('nodeInfo', null, function(err, msg) {
-                       if(err) {
-                        console.error(err);
-                        abort(NODEINFO_ERROR);
-                      }
-                       var rows = [];
-                       rows.push(['serverId', 'serverType', 'pid', 'cpuAvg', 'memAvg', 'time']);
-                       for(var key in msg) {
-                           var server = msg[key];
-                           rows.push([server['serverId'], server['serverType'], server['pid'], server['cpuAvg'], server['memAvg'], server['time']]);
-                       }
-                       console.log(cliff.stringifyRows(rows, ['red','blue','green','white','yellow','grey']));
-                       process.exit(1);
-                   });
-               }
-           });
-       });
-   } else abort(NOWORKSPACE_ERROR);
+        fs.readFile(TMP_FILE, function(err, data) {
+            if(err) abort(FILEREAD_ERROR);
+            var client = new adminClient();
+            MASTER_JSON = require(MASTER_CONFIG);
+            var config = MASTER_JSON[data.toString().split(':')[0]];
+            var id = 'pomelo_list_' + Date.now();
+            client.connect(id, config.host, config.port, function(err) {
+                if(err) abort(CONNECT_ERROR);
+                else {
+                    client.request(co.moduleId, {
+                        signal: 'list'
+                    }, function(err, data) {
+                        if(err) {
+                            console.error(err);
+                            abort(NODEINFO_ERROR);
+                        }
+                        var msg = data.msg;
+                        var rows = [];
+                        rows.push(['serverId', 'serverType', 'pid', 'cpuAvg', 'memAvg', 'time']);
+                        for(var key in msg) {
+                            var server = msg[key];
+                            rows.push([server['serverId'], server['serverType'], server['pid'], server['cpuAvg'], server['memAvg'], server['time']]);
+                        }
+                        console.log(cliff.stringifyRows(rows, ['red', 'blue', 'green', 'white', 'yellow', 'grey']));
+                        process.exit(1);
+                    });
+                }
+            });
+        });
+    } else abort(NOWORKSPACE_ERROR);
 };
 
 /**
@@ -238,13 +244,14 @@ function list() {
  * @param {String} signal stop/kill
  *
  */
+
 function terminal(signal) {
     if(args.length > 1 || (args.length === 1 && args[0] !== '--force')) abort(COMMAND_ERROR);
     if(IF_WORKSPACE) {
         console.info(CLOSEAPP_INFO);
         if(args[0] === '--force') {
-                exec(KILL_CMD);
-                process.exit(1);
+            exec(KILL_CMD);
+            process.exit(1);
         }
         fs.readFile(TMP_FILE, function(err, data) {
             if(err) abort(FILEREAD_ERROR);
@@ -261,17 +268,17 @@ function terminal(signal) {
             }
             client.connect(id, config.host, config.port, function(err) {
                 if(err) abort(CONNECT_ERROR);
-                    client.request(stop.moduleId, {
-                        signal: signal
-                    }, function(err, msg) {
-                        if(err) abort(STOPSERVER_ERROR);
-                        if(msg.status === "error") abort(STOPSERVER_ERROR);
-                        setTimeout(function() {
-                            exec(KILL_CMD);
-                            fs.unlinkSync(TMP_FILE);
-                            process.exit(1);
-                        }, TIME_KILL_WAIT);
-                    });
+                client.request(co.moduleId, {
+                    signal: signal
+                }, function(err, msg) {
+                    if(err) abort(STOPSERVER_ERROR);
+                    if(msg.status === "error") abort(STOPSERVER_ERROR);
+                    setTimeout(function() {
+                        exec(KILL_CMD);
+                        fs.unlinkSync(TMP_FILE);
+                        process.exit(1);
+                    }, TIME_KILL_WAIT);
+                });
             });
         });
     } else abort(NOWORKSPACE_ERROR);
@@ -284,6 +291,7 @@ function terminal(signal) {
  * @param {String} path
  * @param {Function} fn
  */
+
 function emptyDirectory(path, fn) {
     fs.readdir(path, function(err, files) {
         if(err && 'ENOENT' != err.code) abort(FILEREAD_ERROR);
@@ -297,6 +305,7 @@ function emptyDirectory(path, fn) {
  * @param {String} msg
  * @param {Function} fn
  */
+
 function confirm(msg, fn) {
     prompt(msg, function(val) {
         fn(/^ *y(es)?/i.test(val));
@@ -309,6 +318,7 @@ function confirm(msg, fn) {
  * @param {String} msg
  * @param {Function} fn
  */
+
 function prompt(msg, fn) {
     if(' ' == msg[msg.length - 1]) process.stdout.write(msg);
     else console.log(msg);
@@ -323,6 +333,7 @@ function prompt(msg, fn) {
  *
  * @param {String} str
  */
+
 function abort(str) {
     console.error(str);
     process.exit(1);
@@ -333,6 +344,7 @@ function abort(str) {
  *
  * @param {Number} argNum
  */
+
 function legalArgNum(argNum) {
     if(args.length != argNum) abort(COMMAND_ERROR);
 };
@@ -343,6 +355,7 @@ function legalArgNum(argNum) {
  * @param {String} origin
  * @param {String} target
  */
+
 function copy(origin, target) {
     if(!fs.existsSync(origin)) abort(origin + 'is not exist.');
     if(!fs.existsSync(target)) {
@@ -368,6 +381,7 @@ function copy(origin, target) {
  * @param {String} path
  * @param {Number} mode
  */
+
 function mkdir(url, mode) {
     var arr = url.split('/');
     mode = mode || 0755;
@@ -382,6 +396,7 @@ function mkdir(url, mode) {
         arr[0] = "/";
         break;
     };
+
     function inner(cur) {
         if(!fs.existsSync(cur)) fs.mkdirSync(cur, mode);
         if(arr.length) inner(cur + '/' + arr.shift());
