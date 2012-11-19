@@ -6,6 +6,7 @@
 var fs = require('fs'),
     cp = require('child_process'),
     ph = require('path'),
+    cliff = require('cliff'),
     exec = cp.exec,
     spawn = cp.spawn,
     adminClient = require('pomelo-admin').adminClient, 
@@ -212,49 +213,17 @@ function list() {
                if(err) abort(CONNECT_ERROR);
                else {
                    client.request('nodeInfo', null, function(err, msg) {
-                       if(err) abort(NODEINFO_ERROR);
-                       var str = 'serverId                  serverType             pid            cpuAvg        memAvg        time';
-                       console.log(str);
+                       if(err) {
+                        console.error(err);
+                        abort(NODEINFO_ERROR);
+                      }
+                       var rows = [];
+                       rows.push(['serverId', 'serverType', 'pid', 'cpuAvg', 'memAvg', 'time']);
                        for(var key in msg) {
-                           var temp = [];
-                           for(var i = 0; i < str.length; i++) {
-                               temp.push('_');
-                           }
-                           var result = temp;
-                           var k = 0;
-                           var str_tem = msg[key]['serverId'].toString();
-                           for(var j = 0; j < str_tem.length; j++) {
-                               result[k + j] = str_tem[j];
-                           }
-                           k = 'serverId                  '.length;
-                           str_tem = msg[key]['serverType'].toString();
-                           for(var j = 0; j < str_tem.length; j++) {
-                               result[k + j] = str_tem[j];
-                           }
-                           k = 'serverId                  serverType             '.length;
-                           str_tem = msg[key]['pid'].toString();
-                           for(var j = 0; j < str_tem.length; j++) {
-                               result[k + j] = str_tem[j];
-                           }
-                           k = 'serverId                  serverType             pid            '.length;
-                           str_tem = msg[key]['cpuAvg'].toString();
-                           for(var j = 0; j < str_tem.length; j++) {
-                               result[k + j] = str_tem[j];
-                           }
-                           k = 'serverId                  serverType             pid            cpuAvg        '.length;
-                           str_tem = msg[key]['memAvg'].toString();
-                           for(var j = 0; j < str_tem.length; j++) {
-                               result[k + j] = str_tem[j];
-                           }
-                           k = 'serverId                  serverType             pid            cpuAvg        memAvg        '.length;
-                           str_tem = msg[key]['time'].toString();
-                           for(var j = 0; j < str_tem.length; j++) {
-                               result[k + j] = str_tem[j];
-                           }
-                           result = result.join('');
-                           result = result.replace(/_/g, " ");
-                           console.log(result);
+                           var server = msg[key];
+                           rows.push([server['serverId'], server['serverType'], server['pid'], server['cpuAvg'], server['memAvg'], server['time']]);
                        }
+                       console.log(cliff.stringifyRows(rows, ['red','blue','green','white','yellow','grey']));
                        process.exit(1);
                    });
                }
