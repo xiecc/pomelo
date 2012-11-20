@@ -27,7 +27,6 @@ var FOREVER = fs.existsSync(ph.dirname(process.execPath) + '/forever');
 var HOME = IF_HOME ? CUR_DIR : CUR_DIR + '/game-server';
 var LOGS_DIR = IF_HOME ? CUR_DIR + '/logs/' : CUR_DIR + '/game-server/logs/';
 var MASTER_CONFIG = HOME + '/config/master.json';
-var FOREVER_ARGS = '-o ' + LOGS_DIR + 'forever/out.log -e ' + LOGS_DIR + 'forever/err.log';
 var KILL_CMD = 'kill -9 `ps -ef|grep "node ' + HOME + '/app.js' + '"|awk \'{print $2}\'`';
 var TMP_FILE = LOGS_DIR + 'tmp';
 var MASTER_JSON;
@@ -173,14 +172,10 @@ function start() {
         abort(COMMAND_ERROR);
         break;
     };
-    if(IF_WORKSPACE) {
+    if(IF_HOME) {
         var ls;
         if(!DAEMON) {
-            if(!IF_HOME) {
-                var cmd = util.format('cd %s && node ' + HOME + '/app.js env=', 'game-server');
-                cmd += mode;
-                ls = exec(cmd);
-            } else ls = spawn('node', [HOME + '/app.js', 'env=' + mode]);
+            ls = spawn(process.execPath, [HOME + '/app.js', 'env=' + mode]);
             ls.stdout.on('data', function(data) {
                 console.log(data.toString());
             });
@@ -189,8 +184,7 @@ function start() {
             });
         } else {
             if(FOREVER) {
-                var cmd = 'forever start ' + FOREVER_ARGS + ' app.js env=' + mode;
-                if(!IF_HOME) cmd = util.format('cd %s && ' + cmd, 'game-server');
+                var cmd = 'forever start app.js env=' + mode;
                 ls = exec(cmd);
                 console.info(RUNDAEMON_INFO);
             } else abort(INSTALLFOREVER_ERROR);
