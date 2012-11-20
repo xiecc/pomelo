@@ -4,36 +4,37 @@
  * Module dependencies.
  */
 var fs = require('fs'),
-    cp = require('child_process'),
-    ph = require('path'),
+    path = require('path'),
+    util = require('util'),
     cliff = require('cliff'),
+    cp = require('child_process'),
     exec = cp.exec,
     spawn = cp.spawn,
-    adminClient = require('pomelo-admin').adminClient,
-    co = require('../lib/modules/console');
-utils = require('../lib/util/utils'), util = require('util');
+    co = require('../lib/modules/console'),
+    utils = require('../lib/util/utils'),
+    adminClient = require('pomelo-admin').adminClient;
 
 /**
  *  Common Variables
  */
-var args = process.argv.slice(2);
-var DAEMON = false;
-var TIME_INIT = 1000;
-var TIME_KILL_WAIT = 5000;
-var CUR_DIR = process.cwd();
-var IF_HOME = utils.endsWith(CUR_DIR, 'game-server');
-var IF_WORKSPACE = fs.existsSync('./app.js') || fs.existsSync('game-server/app.js');
-var FOREVER = fs.existsSync(ph.dirname(process.execPath) + '/forever');
-var HOME = IF_HOME ? CUR_DIR : CUR_DIR + '/game-server';
-var LOGS_DIR = IF_HOME ? CUR_DIR + '/logs/' : CUR_DIR + '/game-server/logs/';
-var MASTER_CONFIG = HOME + '/config/master.json';
-var KILL_CMD = 'kill -9 `ps -ef|grep "node ' + HOME + '/app.js' + '"|awk \'{print $2}\'`';
-var TMP_FILE = LOGS_DIR + 'tmp';
-var MASTER_JSON;
-
 var DEV = 'development';
 var PRD = 'production';
 var DEM = '--daemon';
+var DAEMON = false;
+var TIME_INIT = 1 * 1000;
+var TIME_KILL_WAIT = 5 * 1000;
+
+var CUR_DIR = process.cwd();
+var IF_HOME = utils.endsWith(CUR_DIR, 'game-server');
+var IF_WORKSPACE = fs.existsSync('./app.js') || fs.existsSync('game-server/app.js');
+var FOREVER = fs.existsSync(path.dirname(process.execPath) + '/forever');
+var HOME = IF_HOME ? CUR_DIR : path.join(CUR_DIR, 'game-server');
+var LOGS_DIR = IF_HOME ? path.join(CUR_DIR, 'logs') : path.join(CUR_DIR, 'game-server/logs');
+var MASTER_CONFIG = path.resolve(HOME, 'config/master.json');
+var TMP_FILE = path.resolve(LOGS_DIR, 'tmp');
+var KILL_CMD = 'kill -9 `ps -ef|grep "' + HOME + '/app.js' + '"|awk \'{print $2}\'`';
+var MASTER_JSON;
+
 var NOWORKSPACE_ERROR = 'Please go to your pomelo project workspace to operate the application.';
 var COMMAND_ERROR = 'The command is error format.';
 var INSTALLFOREVER_ERROR = 'Please install forever use command: npm install forever -g.';
@@ -43,7 +44,6 @@ var STOPSERVER_ERROR = 'Fail to stop server.';
 var FILEREAD_ERROR = 'Fail to read the file, please check if the application is started legally.';
 var RUNDAEMON_INFO = 'Application run in daemon.\nStop the application use the command:pomelo stop.';
 var CLOSEAPP_INFO = 'Closing the application......\nPlease wait......';
-
 /**
  * Usage documentation.
  */
@@ -52,11 +52,13 @@ var usage = '' + '\n' + '  Usage: pomelo [action] [option]\n' + '\n' + '  Option
 /**
  * Framework version.
  */
-var version = JSON.parse(fs.readFileSync(__dirname + '/../package.json')).version;
+var version = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json'))).version;
 
 /**
  * Parse command arguments.
  */
+var args = process.argv.slice(2);
+
 (function() {
     var arg = args.shift();
     switch(arg) {
@@ -97,7 +99,6 @@ var version = JSON.parse(fs.readFileSync(__dirname + '/../package.json')).versio
  *
  * @param {String} path
  */
-
 function init(path) {
     emptyDirectory(path, function(empty) {
         if(empty) {
@@ -118,29 +119,20 @@ function init(path) {
 /**
  * Create directory and files at the given directory `path`.
  *
- * @param {String} path
+ * @param {String} ph
  */
-
-function createApplicationAt(path) {
-    var name = path;
-    if(path.indexOf('/') !== -1) {
-        var str = path.split('/');
-        name = str[str.length - 1];
-    } else {
-        var arr = CUR_DIR.split('/');
-        if(path === '.') name = arr[arr.length - 1];
-        if(path === '..') name = arr[arr.length - 2];
-    }
-    copy(__dirname + '/../template/', path);
-    mkdir(path + '/game-server/logs/forever', 0);
-    mkdir(path + '/shared', 0);
+function createApplicationAt(ph) {
+    var name = path.basename(path.resolve(CUR_DIR, ph));
+    copy(path.join(__dirname, '../template/'), ph);
+    mkdir(path.join(ph, 'game-server/logs'), 0755);
+    mkdir(path.join(ph, 'shared'), 0755);
     setTimeout(function() {
-        var repalcefile = [path + '/game-server/app.js', path + '/game-server/package.json', path + '/web-server/package.json'];
+        var repalcefile = [path.resolve(ph, 'game-server/app.js'), path.resolve(ph, 'game-server/package.json'), path.resolve(ph, 'web-server/package.json')];
         for(var i = 0; i < repalcefile.length; i++) {
             var str = fs.readFileSync(repalcefile[i]).toString();
             fs.writeFileSync(repalcefile[i], str.replace('$', name));
         }
-        var f = path + '/game-server/package.json';
+        var f = path.resolve(ph, 'game-server/package.json');
         var content = fs.readFileSync(f).toString();
         fs.writeFileSync(f, content.replace('#', version));
     }, TIME_INIT);
@@ -150,7 +142,6 @@ function createApplicationAt(path) {
  * Start application.
  *
  */
-
 function start() {
     var mode = DEV;
     switch(args.length) {
@@ -175,7 +166,7 @@ function start() {
     if(IF_HOME) {
         var ls;
         if(!DAEMON) {
-            ls = spawn(process.execPath, [HOME + '/app.js', 'env=' + mode]);
+            ls = spawn(process.execPath, [path.resolve(HOME, 'app.js'), 'env=' + mode]);
             ls.stdout.on('data', function(data) {
                 console.log(data.toString());
             });
@@ -197,7 +188,6 @@ function start() {
  * List pomelo processes.
  *
  */
-
 function list() {
     if(IF_WORKSPACE) {
         fs.readFile(TMP_FILE, function(err, data) {
@@ -238,7 +228,6 @@ function list() {
  * @param {String} signal stop/kill
  *
  */
-
 function terminal(signal) {
     if(args.length > 1 || (args.length === 1 && args[0] !== '--force')) abort(COMMAND_ERROR);
     if(IF_WORKSPACE) {
@@ -285,7 +274,6 @@ function terminal(signal) {
  * @param {String} path
  * @param {Function} fn
  */
-
 function emptyDirectory(path, fn) {
     fs.readdir(path, function(err, files) {
         if(err && 'ENOENT' != err.code) abort(FILEREAD_ERROR);
@@ -299,7 +287,6 @@ function emptyDirectory(path, fn) {
  * @param {String} msg
  * @param {Function} fn
  */
-
 function confirm(msg, fn) {
     prompt(msg, function(val) {
         fn(/^ *y(es)?/i.test(val));
@@ -312,7 +299,6 @@ function confirm(msg, fn) {
  * @param {String} msg
  * @param {Function} fn
  */
-
 function prompt(msg, fn) {
     if(' ' == msg[msg.length - 1]) process.stdout.write(msg);
     else console.log(msg);
@@ -327,7 +313,6 @@ function prompt(msg, fn) {
  *
  * @param {String} str
  */
-
 function abort(str) {
     console.error(str);
     process.exit(1);
@@ -338,7 +323,6 @@ function abort(str) {
  *
  * @param {Number} argNum
  */
-
 function legalArgNum(argNum) {
     if(args.length != argNum) abort(COMMAND_ERROR);
 };
@@ -349,7 +333,6 @@ function legalArgNum(argNum) {
  * @param {String} origin
  * @param {String} target
  */
-
 function copy(origin, target) {
     if(!fs.existsSync(origin)) abort(origin + 'is not exist.');
     if(!fs.existsSync(target)) {
@@ -359,8 +342,8 @@ function copy(origin, target) {
     fs.readdir(origin, function(err, datalist) {
         if(err) abort(FILEREAD_ERROR);
         for(var i = 0; i < datalist.length; i++) {
-            var oCurrent = origin + '/' + datalist[i];
-            var tCurrent = target + '/' + datalist[i];
+            var oCurrent = path.resolve(origin, datalist[i]);
+            var tCurrent = path.resolve(target, datalist[i]);
             if(fs.statSync(oCurrent).isFile()) {
                 fs.writeFileSync(tCurrent, fs.readFileSync(oCurrent, ''), '');
                 console.log('Create file: ' + tCurrent);
@@ -375,7 +358,6 @@ function copy(origin, target) {
  * @param {String} path
  * @param {Number} mode
  */
-
 function mkdir(url, mode) {
     var arr = url.split('/');
     mode = mode || 0755;
