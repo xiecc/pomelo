@@ -32,7 +32,7 @@ var HOME = IF_HOME ? CUR_DIR : path.join(CUR_DIR, 'game-server');
 var LOGS_DIR = IF_HOME ? path.join(CUR_DIR, 'logs') : path.join(CUR_DIR, 'game-server/logs');
 var MASTER_CONFIG = path.resolve(HOME, 'config/master.json');
 var TMP_FILE = path.resolve(LOGS_DIR, 'tmp');
-var KILL_CMD = 'kill -9 `ps -ef|grep "' + HOME + '/app.js' + '"|awk \'{print $2}\'`';
+var KILL_CMD = 'kill -9 `ps -ef|grep node|awk \'{print $2}\'`';
 var MASTER_JSON;
 
 var NOWORKSPACE_ERROR = 'Please go to your pomelo project workspace to operate the application.';
